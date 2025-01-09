@@ -1,26 +1,18 @@
 [![Safety Dance](https://img.shields.io/badge/unsafe-forbidden-success.svg)](https://github.com/rust-secure-code/safety-dance/)
 
-# Bitcoin-Wasm
+# Bitspend-Client
 
-## :beginner: Why Bitcoin-WASM ?
+## :beginner: Why Bitspend-Client ?
 
-**Bitcoin Wasm** consists of a  universally embeddable and composable _Bitcoin Payment Node_  which  is designed to be embedded in a variety of applications using WASI-compliant runtime SDKs like **wasmtime** and **JCO**. At the Centre Of Bitcoin-WASM is a Neutrino Bitcoin Light Client , which is a form of Simple Payment Verification Mechanism and serves as a base that can be extended upon with a diverse range of functionalities which we call __adapters__ which can be open-source or proprietary examples are tbDEX protocol, Silent Payments .
+**Bitspend Client** is a WASM based, secure, pluggable, and lightweight Bitcoin payment client that enables applications to natively process Bitcoin payments both on-chain and off-chain. The client requires a WASI-preview2-compliant runtime, such as **wasmtime** and **JCO**.
+
+At the core of Bitcoin-WASM is a Neutrino-based Bitcoin Light Client, providing a robust foundation that can be extended with a wide range of pluggable components, referred to as __adapters__. These adapters enable additional capabilities such as signing, wallet management, the Ark protocol, and Silent Payments.
 
 ```mermaid
 flowchart TD
-    A[Core - Neutrino Light Client] <--> B(Public Adapter 1)
-    A --> C(Private Adapter 2)
+    A[Core - Neutrino Light Client] <--> B(Adapter 1)
+    A --> C(Adapter 2)
 ```
-
-
-### Design Decision
-To be pluggable, bitcoin-WASM must adhere to a few concrete design constraints; these constraints are required due to the host system's zero knowledge approach, which would embed bitcoin-WASM. 
-
-- Minimal Software Resource Consumption.
-
-- Usage of Only decentralized Protocols and Systems.
-
-- The absence of private information storage.
 
 ### Core -Neutrino Light Client
 
@@ -37,16 +29,17 @@ Here's a breakdown of its key features:
 - Dependency on Full Nodes: Neutrino clients rely on a network of full nodes to verify the validity of transactions and blocks.
 
 
-## :station: Open Source Adapters
+## :station: Adapters
 
 - [x] Key Value Store (Implemented)
-- [ ] Deterministic wallet (inprogress)
-- [ ] Singing Device (not started)
+- [ ] HD wallet (in progress)
+- [ ] Online Signer (not started)
+- [ ] Hardware Signer Integration (In Research)
 - [ ] Ark Protocol (In Research)
 
 
 ##  Why Webassembly ?
-Using WebAssembly (Wasm) to create Bitspend core has several advantages, especially in contexts where performance, security, and portability are key concerns. Here’s why Wasm is a great fit for building Bitspend core:
+Using WebAssembly (Wasm) to create Bitspend-Client has several advantages, especially in contexts where performance, security, and portability are key concerns. Here’s why Wasm is a great fit for building Bitspend-Client:
 
 Efficient resource usage: Wasm is designed to be compact and fast, meaning plugins written in Wasm can load and execute more quickly, enhancing the user experience.
 
@@ -127,7 +120,7 @@ bitcoin-wasm
 │   │   └── wit
 |   |   |  └──world.wit
 |   |   ├── Cargo.toml
-│   ├── tbdex
+│   ├── wallet
 │   │   ├── src
 │   │   └── wit
 |   |   |  └──world.wit
@@ -157,9 +150,9 @@ bitcoin-wasm
 
 Here's a breakdown of the key folders:
 
-- **crates:** This folder holds open source adapters that are free to use, such as:
+- **crates:** This folder holds adapters  such as:
    - **store:** A generic key-value store.
-   - **tbdex:** The tbDex protocol.
+   - **wallet:** The Hierachical Deterministic Wallet.
 
 - **node:** This is the core that contains the neutrino light client which uses Compact  Block Filtering.
 
