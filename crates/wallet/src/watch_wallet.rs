@@ -2,10 +2,9 @@ use std::{collections::BTreeMap, vec};
 
 use bitcoin::{absolute::LockTime, bip32::{ChildNumber, DerivationPath, Xpub}, key::Secp256k1, psbt::{self, Input, PsbtSighashType}, transaction::Version, Address, Amount, CompressedPublicKey, EcdsaSighashType, FeeRate, Network, Psbt, Script, ScriptBuf, Transaction, TxIn, TxOut};
 
-use crate::{coin_selection::{CoinSelectionAlgorithm, DefaultCoinSelectionAlgorithm, Excess}, errors::{self, Error}, types::{self, Utxo}};
-use wasi::random::random::{get_random_u64, get_random_bytes};
-
+use crate::{coin_selection::{CoinSelectionAlgorithm, DefaultCoinSelectionAlgorithm, Excess}, errors::{self, Error}, types::{self, KeychainKind, Utxo}};
 use rand_core::RngCore;
+
 
 
 
@@ -16,27 +15,7 @@ pub enum WalletType {
 
 
 
-struct WasiRandom;
-
-impl RngCore for WasiRandom {
-    fn next_u32(&mut self) -> u32 {
-        get_random_u64() as u32
-    }
-
-    fn next_u64(&mut self) -> u64 {
-        get_random_u64()
-    }
-
-    fn fill_bytes(&mut self, dest: &mut [u8]) {
-        let source = get_random_bytes(dest.len() as u64);
-        dest[..source.len()].copy_from_slice(&source);
-    }
-
-    fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), rand_core::Error> {
-        Ok(self.fill_bytes(dest))
-    }
-}
-
+#[allow(dead_code)]
 pub struct  WatchOnly {
     master_public: Xpub,
     network: Network,
@@ -44,14 +23,18 @@ pub struct  WatchOnly {
     wallet_type: WalletType,
     receive_depth: u32,
     change_depth: u32,
+    created_script_pubkeys: BTreeMap<Vec<u8>, PubkeyDetails>
 
 }
 
-pub struct AddressDetails {
-    hash: Vec<u8>,
-    human: String,
+#[allow(dead_code)]
+pub struct PubkeyDetails {
+    key_type: KeychainKind,
+    key_depth: u32
 }
 
+
+#[allow(dead_code)]
 impl WatchOnly {
 
     pub fn new(master_public: Xpub, network: Network) -> Self {
@@ -61,8 +44,8 @@ impl WatchOnly {
             utxos: Vec::new(),
             wallet_type: WalletType::P2WPKH,
             receive_depth: 0,
-            change_depth: 0
-            
+            change_depth: 0,
+            created_script_pubkeys: BTreeMap::new()     
         }
     }
 
@@ -70,7 +53,7 @@ impl WatchOnly {
         self.utxos.push(utxo);
     }
 
-    pub fn derive_p2wpkh_receive_address(& mut self) -> Result< AddressDetails ,errors::Error>{
+    pub fn derive_p2wpkh_receive_address(& mut self) -> Result<String ,errors::Error>{
         let secp = Secp256k1::new();
         let child_pub = self.master_public
             .ckd_pub(&secp, bitcoin::bip32::ChildNumber::Normal { index: 0 })
@@ -78,13 +61,10 @@ impl WatchOnly {
             .ckd_pub(&secp, bitcoin::bip32::ChildNumber::Normal { index: self.receive_depth })
             .map_err(|err| errors::Error::PubKeyError(err) )?.to_pub();
 
-        self.receive_depth +=1;    
-        let pub_key = Address::p2wpkh(&child_pub, self.network)
-            .script_pubkey();
-
-        let hash =  pub_key.as_bytes().to_vec();
-
-        return  Ok(AddressDetails { hash, human: pub_key.to_string() })
+        let pub_key = Address::p2wpkh(&child_pub, self.network);
+        let script_pub =  pub_key.script_pubkey().to_bytes();
+        self.created_script_pubkeys.insert(script_pub, PubkeyDetails{ key_type: KeychainKind::External, key_depth: self.receive_depth });
+        return  Ok(pub_key.to_string())
         
     }
 
@@ -97,10 +77,12 @@ impl WatchOnly {
             .map_err(|err| errors::Error::PubKeyError(err) )?.to_pub();
 
         self.change_depth +=1;    
-        let pub_key = Address::p2wpkh(&child_pub, self.network)
+        let script_pub = Address::p2wpkh(&child_pub, self.network)
             .script_pubkey();
-            
-        return  Ok(pub_key.to_bytes().to_vec())
+
+        self.created_script_pubkeys.insert(script_pub.to_bytes(), PubkeyDetails{ key_type: KeychainKind::External, key_depth: self.receive_depth });
+
+        return  Ok(script_pub.to_bytes().to_vec())
         
     }
 
@@ -112,13 +94,12 @@ impl WatchOnly {
             .ckd_pub(&secp, bitcoin::bip32::ChildNumber::Normal { index: utxo.derivation_index })
             .map_err(|err| errors::Error::PubKeyError(err) )?.to_pub();
 
-       
         Ok(child_pub)
     }
 
-    pub fn create_psbt_tx(& mut self, recipient: Vec<u8>, fee_rate: FeeRate, amount: Amount) -> Result<Vec<u8>, errors::Error> {
+    pub fn create_psbt_tx<T: RngCore>(& mut self, recipient: Vec<u8>, fee_rate: FeeRate, amount: Amount, mut rand: T) -> Result<Vec<u8>, errors::Error> {
         let change_script = self.derive_p2wpkh_change_script()?;
-        let coinselection = DefaultCoinSelectionAlgorithm::default().coin_select(vec![], self.utxos.clone(), fee_rate, amount, Script::from_bytes(&change_script), &mut WasiRandom).map_err(|err| errors::Error::CoinSelection(err))?;
+        let coinselection = DefaultCoinSelectionAlgorithm::default().coin_select(vec![], self.utxos.clone(), fee_rate, amount, Script::from_bytes(&change_script), &mut rand).map_err(|err| errors::Error::CoinSelection(err))?;
         
         let inputs = coinselection.selected.clone().iter().map(|utxo| TxIn {
             previous_output: utxo.outpoint,
@@ -175,4 +156,59 @@ impl WatchOnly {
 }
 
 
+#[cfg(test)]
+mod tests {
+    use std::str::FromStr;
 
+    use bitcoin::{hex::FromHex, OutPoint, Weight};
+    use rand::rngs::mock::StepRng;
+    use types::WeightedUtxo;
+
+    use super::*;
+
+    fn get_xpub() -> Xpub {
+        let xpub = Xpub::from_str("xpub6BgqrNmJjjiaQASxUaBH9xLTBtnVpSoTzSBiGt12K572ofLub5U2rvZok5MJ5qFnBqPVi2HmnMhzQsAuZ1jG7ppoizmEzbuuCTtj9rm9Cpp");
+        return xpub.unwrap();
+    }
+
+    #[test]
+    fn test_derive_p2wpkh_receive_address() {
+        
+        let mut wallet = WatchOnly::new(get_xpub(), Network::Bitcoin);
+        let result = wallet.derive_p2wpkh_receive_address();
+
+        assert!(result.is_ok());
+        let address_details = result.unwrap();
+        assert!(!address_details.is_empty());
+        assert_eq!(address_details, "bc1qcyhpagfzct3dskfefrh7mefrv5hqfy7txzhq24".to_string());
+    }
+
+    #[test]
+    fn test_derive_p2wpkh_change_script() {
+        let mut wallet = WatchOnly::new(get_xpub(), Network::Bitcoin);
+        let result = wallet.derive_p2wpkh_change_script();
+
+        assert!(result.is_ok());
+        let script = result.unwrap();
+        assert_eq!(script, Vec::from_hex("001478e81513288cb8697189df5aa8561bee7048e192").unwrap());
+    }
+
+    #[test]
+    fn test_create_psbt_tx() {
+        let mut wallet = WatchOnly::new(get_xpub(), Network::Bitcoin);
+        let utxo = Utxo{ outpoint: OutPoint::from_str("90c6b3b368a8aa8e5ba3b2140d8e178431d3003a9e85f0d303f63b11437451da:0").unwrap(), keychain: types::KeychainKind::External, 
+        txout: TxOut { value: Amount::from_sat(2000), script_pubkey: ScriptBuf::from_hex("0014c12e1ea122c2e2d8593948efede523652e0493cb").unwrap() }, is_spent: false, derivation_index: 0, chain_position: None };
+
+
+        wallet.add_utxo(WeightedUtxo { satisfaction_weight: Weight::ZERO, utxo });
+        let recipient = Vec::from_hex("0014c12e1ea122c2e2d8593948efede523652e0493cb").unwrap();
+        let fee_rate = FeeRate::from_sat_per_vb(3).unwrap();
+        let amount = Amount::from_sat(1000);
+        let mut rng = StepRng::new(2, 1);
+
+        let result = wallet.create_psbt_tx(recipient, fee_rate, amount, &mut rng);
+
+        assert!(result.is_ok());
+        assert!(wallet.created_script_pubkeys.get(&Vec::from_hex("001478e81513288cb8697189df5aa8561bee7048e192").unwrap()).is_some());
+    }
+}
