@@ -16,38 +16,48 @@ pub mod exports {
                 use super::super::super::super::_rt;
                 #[repr(u8)]
                 #[derive(Clone, Copy, Eq, PartialEq)]
-                pub enum Network {
+                pub enum BitcoinNetwork {
                     Bitcoin,
                     Testnet,
                     Testnet4,
                     Signet,
                     Regtest,
                 }
-                impl ::core::fmt::Debug for Network {
+                impl ::core::fmt::Debug for BitcoinNetwork {
                     fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
                         match self {
-                            Network::Bitcoin => f.debug_tuple("Network::Bitcoin").finish(),
-                            Network::Testnet => f.debug_tuple("Network::Testnet").finish(),
-                            Network::Testnet4 => f.debug_tuple("Network::Testnet4").finish(),
-                            Network::Signet => f.debug_tuple("Network::Signet").finish(),
-                            Network::Regtest => f.debug_tuple("Network::Regtest").finish(),
+                            BitcoinNetwork::Bitcoin => {
+                                f.debug_tuple("BitcoinNetwork::Bitcoin").finish()
+                            }
+                            BitcoinNetwork::Testnet => {
+                                f.debug_tuple("BitcoinNetwork::Testnet").finish()
+                            }
+                            BitcoinNetwork::Testnet4 => {
+                                f.debug_tuple("BitcoinNetwork::Testnet4").finish()
+                            }
+                            BitcoinNetwork::Signet => {
+                                f.debug_tuple("BitcoinNetwork::Signet").finish()
+                            }
+                            BitcoinNetwork::Regtest => {
+                                f.debug_tuple("BitcoinNetwork::Regtest").finish()
+                            }
                         }
                     }
                 }
 
-                impl Network {
+                impl BitcoinNetwork {
                     #[doc(hidden)]
-                    pub unsafe fn _lift(val: u8) -> Network {
+                    pub unsafe fn _lift(val: u8) -> BitcoinNetwork {
                         if !cfg!(debug_assertions) {
                             return ::core::mem::transmute(val);
                         }
 
                         match val {
-                            0 => Network::Bitcoin,
-                            1 => Network::Testnet,
-                            2 => Network::Testnet4,
-                            3 => Network::Signet,
-                            4 => Network::Regtest,
+                            0 => BitcoinNetwork::Bitcoin,
+                            1 => BitcoinNetwork::Testnet,
+                            2 => BitcoinNetwork::Testnet4,
+                            3 => BitcoinNetwork::Signet,
+                            4 => BitcoinNetwork::Regtest,
 
                             _ => panic!("invalid enum discriminant"),
                         }
@@ -82,6 +92,56 @@ pub mod exports {
                 }
 
                 impl std::error::Error for Error {}
+                #[derive(Clone)]
+                pub struct Config {
+                    pub xpub: _rt::String,
+                    pub network: BitcoinNetwork,
+                }
+                impl ::core::fmt::Debug for Config {
+                    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+                        f.debug_struct("Config")
+                            .field("xpub", &self.xpub)
+                            .field("network", &self.network)
+                            .finish()
+                    }
+                }
+                #[derive(Clone)]
+                pub enum Initialization {
+                    OldState(_rt::Vec<u8>),
+                    Config(Config),
+                }
+                impl ::core::fmt::Debug for Initialization {
+                    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+                        match self {
+                            Initialization::OldState(e) => {
+                                f.debug_tuple("Initialization::OldState").field(e).finish()
+                            }
+                            Initialization::Config(e) => {
+                                f.debug_tuple("Initialization::Config").field(e).finish()
+                            }
+                        }
+                    }
+                }
+                #[derive(Clone)]
+                pub struct PartialUtxo {
+                    pub txid: _rt::Vec<u8>,
+                    pub vout: u32,
+                    pub amount: u64,
+                    pub script: _rt::Vec<u8>,
+                    pub is_spent: bool,
+                }
+                impl ::core::fmt::Debug for PartialUtxo {
+                    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+                        f.debug_struct("PartialUtxo")
+                            .field("txid", &self.txid)
+                            .field("vout", &self.vout)
+                            .field("amount", &self.amount)
+                            .field("script", &self.script)
+                            .field("is-spent", &self.is_spent)
+                            .finish()
+                    }
+                }
+                pub type Pubkey = _rt::Vec<u8>;
 
                 #[derive(Debug)]
                 #[repr(transparent)]
@@ -226,19 +286,38 @@ pub mod exports {
                 #[doc(hidden)]
                 #[allow(non_snake_case)]
                 pub unsafe fn _export_constructor_watch_only_cabi<T: GuestWatchOnly>(
-                    arg0: *mut u8,
-                    arg1: usize,
-                    arg2: i32,
+                    arg0: i32,
+                    arg1: *mut u8,
+                    arg2: usize,
+                    arg3: i32,
                 ) -> i32 {
                     #[cfg(target_arch = "wasm32")]
                     _rt::run_ctors_once();
-                    let len0 = arg1;
-                    let bytes0 = _rt::Vec::from_raw_parts(arg0.cast(), len0, len0);
-                    let result1 = WatchOnly::new(T::new(
-                        _rt::string_lift(bytes0),
-                        Network::_lift(arg2 as u8),
-                    ));
-                    (result1).take_handle() as i32
+                    let v2 = match arg0 {
+                        0 => {
+                            let e2 = {
+                                let len0 = arg2;
+
+                                _rt::Vec::from_raw_parts(arg1.cast(), len0, len0)
+                            };
+                            Initialization::OldState(e2)
+                        }
+                        n => {
+                            debug_assert_eq!(n, 1, "invalid enum discriminant");
+                            let e2 = {
+                                let len1 = arg2;
+                                let bytes1 = _rt::Vec::from_raw_parts(arg1.cast(), len1, len1);
+
+                                Config {
+                                    xpub: _rt::string_lift(bytes1),
+                                    network: BitcoinNetwork::_lift(arg3 as u8),
+                                }
+                            };
+                            Initialization::Config(e2)
+                        }
+                    };
+                    let result3 = WatchOnly::new(T::new(v2));
+                    (result3).take_handle() as i32
                 }
                 #[doc(hidden)]
                 #[allow(non_snake_case)]
@@ -370,6 +449,378 @@ pub mod exports {
                         _ => (),
                     }
                 }
+                #[doc(hidden)]
+                #[allow(non_snake_case)]
+                pub unsafe fn _export_method_watch_only_get_utxos_cabi<T: GuestWatchOnly>(
+                    arg0: *mut u8,
+                ) -> *mut u8 {
+                    #[cfg(target_arch = "wasm32")]
+                    _rt::run_ctors_once();
+                    let result0 = T::get_utxos(WatchOnlyBorrow::lift(arg0 as u32 as usize).get());
+                    let ptr1 = _RET_AREA.0.as_mut_ptr().cast::<u8>();
+                    match result0 {
+                        Ok(e) => {
+                            *ptr1.add(0).cast::<u8>() = (0i32) as u8;
+                            let vec5 = e;
+                            let len5 = vec5.len();
+                            let layout5 =
+                                _rt::alloc::Layout::from_size_align_unchecked(vec5.len() * 40, 8);
+                            let result5 = if layout5.size() != 0 {
+                                let ptr = _rt::alloc::alloc(layout5).cast::<u8>();
+                                if ptr.is_null() {
+                                    _rt::alloc::handle_alloc_error(layout5);
+                                }
+                                ptr
+                            } else {
+                                {
+                                    ::core::ptr::null_mut()
+                                }
+                            };
+                            for (i, e) in vec5.into_iter().enumerate() {
+                                let base = result5.add(i * 40);
+                                {
+                                    let PartialUtxo {
+                                        txid: txid2,
+                                        vout: vout2,
+                                        amount: amount2,
+                                        script: script2,
+                                        is_spent: is_spent2,
+                                    } = e;
+                                    let vec3 = (txid2).into_boxed_slice();
+                                    let ptr3 = vec3.as_ptr().cast::<u8>();
+                                    let len3 = vec3.len();
+                                    ::core::mem::forget(vec3);
+                                    *base.add(4).cast::<usize>() = len3;
+                                    *base.add(0).cast::<*mut u8>() = ptr3.cast_mut();
+                                    *base.add(8).cast::<i32>() = _rt::as_i32(vout2);
+                                    *base.add(16).cast::<i64>() = _rt::as_i64(amount2);
+                                    let vec4 = (script2).into_boxed_slice();
+                                    let ptr4 = vec4.as_ptr().cast::<u8>();
+                                    let len4 = vec4.len();
+                                    ::core::mem::forget(vec4);
+                                    *base.add(28).cast::<usize>() = len4;
+                                    *base.add(24).cast::<*mut u8>() = ptr4.cast_mut();
+                                    *base.add(32).cast::<u8>() = (match is_spent2 {
+                                        true => 1,
+                                        false => 0,
+                                    })
+                                        as u8;
+                                }
+                            }
+                            *ptr1.add(8).cast::<usize>() = len5;
+                            *ptr1.add(4).cast::<*mut u8>() = result5;
+                        }
+                        Err(e) => {
+                            *ptr1.add(0).cast::<u8>() = (1i32) as u8;
+                            match e {
+                                Error::CoinSelection => {
+                                    *ptr1.add(4).cast::<u8>() = (0i32) as u8;
+                                }
+                                Error::Psbt => {
+                                    *ptr1.add(4).cast::<u8>() = (1i32) as u8;
+                                }
+                                Error::MissingNonWitnessUtxo => {
+                                    *ptr1.add(4).cast::<u8>() = (2i32) as u8;
+                                }
+                                Error::NoPubkey => {
+                                    *ptr1.add(4).cast::<u8>() = (3i32) as u8;
+                                }
+                                Error::PubkeyError => {
+                                    *ptr1.add(4).cast::<u8>() = (4i32) as u8;
+                                }
+                            }
+                        }
+                    };
+                    ptr1
+                }
+                #[doc(hidden)]
+                #[allow(non_snake_case)]
+                pub unsafe fn __post_return_method_watch_only_get_utxos<T: GuestWatchOnly>(
+                    arg0: *mut u8,
+                ) {
+                    let l0 = i32::from(*arg0.add(0).cast::<u8>());
+                    match l0 {
+                        0 => {
+                            let l7 = *arg0.add(4).cast::<*mut u8>();
+                            let l8 = *arg0.add(8).cast::<usize>();
+                            let base9 = l7;
+                            let len9 = l8;
+                            for i in 0..len9 {
+                                let base = base9.add(i * 40);
+                                {
+                                    let l1 = *base.add(0).cast::<*mut u8>();
+                                    let l2 = *base.add(4).cast::<usize>();
+                                    let base3 = l1;
+                                    let len3 = l2;
+                                    _rt::cabi_dealloc(base3, len3 * 1, 1);
+                                    let l4 = *base.add(24).cast::<*mut u8>();
+                                    let l5 = *base.add(28).cast::<usize>();
+                                    let base6 = l4;
+                                    let len6 = l5;
+                                    _rt::cabi_dealloc(base6, len6 * 1, 1);
+                                }
+                            }
+                            _rt::cabi_dealloc(base9, len9 * 40, 8);
+                        }
+                        _ => (),
+                    }
+                }
+                #[doc(hidden)]
+                #[allow(non_snake_case)]
+                pub unsafe fn _export_method_watch_only_insert_utxos_cabi<T: GuestWatchOnly>(
+                    arg0: *mut u8,
+                    arg1: *mut u8,
+                    arg2: usize,
+                ) -> *mut u8 {
+                    #[cfg(target_arch = "wasm32")]
+                    _rt::run_ctors_once();
+                    let base9 = arg1;
+                    let len9 = arg2;
+                    let mut result9 = _rt::Vec::with_capacity(len9);
+                    for i in 0..len9 {
+                        let base = base9.add(i * 40);
+                        let e9 = {
+                            let l0 = *base.add(0).cast::<*mut u8>();
+                            let l1 = *base.add(4).cast::<usize>();
+                            let len2 = l1;
+                            let l3 = *base.add(8).cast::<i32>();
+                            let l4 = *base.add(16).cast::<i64>();
+                            let l5 = *base.add(24).cast::<*mut u8>();
+                            let l6 = *base.add(28).cast::<usize>();
+                            let len7 = l6;
+                            let l8 = i32::from(*base.add(32).cast::<u8>());
+
+                            PartialUtxo {
+                                txid: _rt::Vec::from_raw_parts(l0.cast(), len2, len2),
+                                vout: l3 as u32,
+                                amount: l4 as u64,
+                                script: _rt::Vec::from_raw_parts(l5.cast(), len7, len7),
+                                is_spent: _rt::bool_lift(l8 as u8),
+                            }
+                        };
+                        result9.push(e9);
+                    }
+                    _rt::cabi_dealloc(base9, len9 * 40, 8);
+                    let result10 =
+                        T::insert_utxos(WatchOnlyBorrow::lift(arg0 as u32 as usize).get(), result9);
+                    let ptr11 = _RET_AREA.0.as_mut_ptr().cast::<u8>();
+                    match result10 {
+                        Ok(_) => {
+                            *ptr11.add(0).cast::<u8>() = (0i32) as u8;
+                        }
+                        Err(e) => {
+                            *ptr11.add(0).cast::<u8>() = (1i32) as u8;
+                            match e {
+                                Error::CoinSelection => {
+                                    *ptr11.add(1).cast::<u8>() = (0i32) as u8;
+                                }
+                                Error::Psbt => {
+                                    *ptr11.add(1).cast::<u8>() = (1i32) as u8;
+                                }
+                                Error::MissingNonWitnessUtxo => {
+                                    *ptr11.add(1).cast::<u8>() = (2i32) as u8;
+                                }
+                                Error::NoPubkey => {
+                                    *ptr11.add(1).cast::<u8>() = (3i32) as u8;
+                                }
+                                Error::PubkeyError => {
+                                    *ptr11.add(1).cast::<u8>() = (4i32) as u8;
+                                }
+                            }
+                        }
+                    };
+                    ptr11
+                }
+                #[doc(hidden)]
+                #[allow(non_snake_case)]
+                pub unsafe fn _export_method_watch_only_get_pubkeys_cabi<T: GuestWatchOnly>(
+                    arg0: *mut u8,
+                ) -> *mut u8 {
+                    #[cfg(target_arch = "wasm32")]
+                    _rt::run_ctors_once();
+                    let result0 = T::get_pubkeys(WatchOnlyBorrow::lift(arg0 as u32 as usize).get());
+                    let ptr1 = _RET_AREA.0.as_mut_ptr().cast::<u8>();
+                    match result0 {
+                        Ok(e) => {
+                            *ptr1.add(0).cast::<u8>() = (0i32) as u8;
+                            let vec3 = e;
+                            let len3 = vec3.len();
+                            let layout3 =
+                                _rt::alloc::Layout::from_size_align_unchecked(vec3.len() * 8, 4);
+                            let result3 = if layout3.size() != 0 {
+                                let ptr = _rt::alloc::alloc(layout3).cast::<u8>();
+                                if ptr.is_null() {
+                                    _rt::alloc::handle_alloc_error(layout3);
+                                }
+                                ptr
+                            } else {
+                                {
+                                    ::core::ptr::null_mut()
+                                }
+                            };
+                            for (i, e) in vec3.into_iter().enumerate() {
+                                let base = result3.add(i * 8);
+                                {
+                                    let vec2 = (e).into_boxed_slice();
+                                    let ptr2 = vec2.as_ptr().cast::<u8>();
+                                    let len2 = vec2.len();
+                                    ::core::mem::forget(vec2);
+                                    *base.add(4).cast::<usize>() = len2;
+                                    *base.add(0).cast::<*mut u8>() = ptr2.cast_mut();
+                                }
+                            }
+                            *ptr1.add(8).cast::<usize>() = len3;
+                            *ptr1.add(4).cast::<*mut u8>() = result3;
+                        }
+                        Err(e) => {
+                            *ptr1.add(0).cast::<u8>() = (1i32) as u8;
+                            match e {
+                                Error::CoinSelection => {
+                                    *ptr1.add(4).cast::<u8>() = (0i32) as u8;
+                                }
+                                Error::Psbt => {
+                                    *ptr1.add(4).cast::<u8>() = (1i32) as u8;
+                                }
+                                Error::MissingNonWitnessUtxo => {
+                                    *ptr1.add(4).cast::<u8>() = (2i32) as u8;
+                                }
+                                Error::NoPubkey => {
+                                    *ptr1.add(4).cast::<u8>() = (3i32) as u8;
+                                }
+                                Error::PubkeyError => {
+                                    *ptr1.add(4).cast::<u8>() = (4i32) as u8;
+                                }
+                            }
+                        }
+                    };
+                    ptr1
+                }
+                #[doc(hidden)]
+                #[allow(non_snake_case)]
+                pub unsafe fn __post_return_method_watch_only_get_pubkeys<T: GuestWatchOnly>(
+                    arg0: *mut u8,
+                ) {
+                    let l0 = i32::from(*arg0.add(0).cast::<u8>());
+                    match l0 {
+                        0 => {
+                            let l4 = *arg0.add(4).cast::<*mut u8>();
+                            let l5 = *arg0.add(8).cast::<usize>();
+                            let base6 = l4;
+                            let len6 = l5;
+                            for i in 0..len6 {
+                                let base = base6.add(i * 8);
+                                {
+                                    let l1 = *base.add(0).cast::<*mut u8>();
+                                    let l2 = *base.add(4).cast::<usize>();
+                                    let base3 = l1;
+                                    let len3 = l2;
+                                    _rt::cabi_dealloc(base3, len3 * 1, 1);
+                                }
+                            }
+                            _rt::cabi_dealloc(base6, len6 * 8, 4);
+                        }
+                        _ => (),
+                    }
+                }
+                #[doc(hidden)]
+                #[allow(non_snake_case)]
+                pub unsafe fn _export_method_watch_only_balance_cabi<T: GuestWatchOnly>(
+                    arg0: *mut u8,
+                ) -> *mut u8 {
+                    #[cfg(target_arch = "wasm32")]
+                    _rt::run_ctors_once();
+                    let result0 = T::balance(WatchOnlyBorrow::lift(arg0 as u32 as usize).get());
+                    let ptr1 = _RET_AREA.0.as_mut_ptr().cast::<u8>();
+                    match result0 {
+                        Ok(e) => {
+                            *ptr1.add(0).cast::<u8>() = (0i32) as u8;
+                            *ptr1.add(8).cast::<i64>() = _rt::as_i64(e);
+                        }
+                        Err(e) => {
+                            *ptr1.add(0).cast::<u8>() = (1i32) as u8;
+                            match e {
+                                Error::CoinSelection => {
+                                    *ptr1.add(8).cast::<u8>() = (0i32) as u8;
+                                }
+                                Error::Psbt => {
+                                    *ptr1.add(8).cast::<u8>() = (1i32) as u8;
+                                }
+                                Error::MissingNonWitnessUtxo => {
+                                    *ptr1.add(8).cast::<u8>() = (2i32) as u8;
+                                }
+                                Error::NoPubkey => {
+                                    *ptr1.add(8).cast::<u8>() = (3i32) as u8;
+                                }
+                                Error::PubkeyError => {
+                                    *ptr1.add(8).cast::<u8>() = (4i32) as u8;
+                                }
+                            }
+                        }
+                    };
+                    ptr1
+                }
+                #[doc(hidden)]
+                #[allow(non_snake_case)]
+                pub unsafe fn _export_method_watch_only_get_receive_address_cabi<
+                    T: GuestWatchOnly,
+                >(
+                    arg0: *mut u8,
+                ) -> *mut u8 {
+                    #[cfg(target_arch = "wasm32")]
+                    _rt::run_ctors_once();
+                    let result0 =
+                        T::get_receive_address(WatchOnlyBorrow::lift(arg0 as u32 as usize).get());
+                    let ptr1 = _RET_AREA.0.as_mut_ptr().cast::<u8>();
+                    match result0 {
+                        Ok(e) => {
+                            *ptr1.add(0).cast::<u8>() = (0i32) as u8;
+                            let vec2 = (e.into_bytes()).into_boxed_slice();
+                            let ptr2 = vec2.as_ptr().cast::<u8>();
+                            let len2 = vec2.len();
+                            ::core::mem::forget(vec2);
+                            *ptr1.add(8).cast::<usize>() = len2;
+                            *ptr1.add(4).cast::<*mut u8>() = ptr2.cast_mut();
+                        }
+                        Err(e) => {
+                            *ptr1.add(0).cast::<u8>() = (1i32) as u8;
+                            match e {
+                                Error::CoinSelection => {
+                                    *ptr1.add(4).cast::<u8>() = (0i32) as u8;
+                                }
+                                Error::Psbt => {
+                                    *ptr1.add(4).cast::<u8>() = (1i32) as u8;
+                                }
+                                Error::MissingNonWitnessUtxo => {
+                                    *ptr1.add(4).cast::<u8>() = (2i32) as u8;
+                                }
+                                Error::NoPubkey => {
+                                    *ptr1.add(4).cast::<u8>() = (3i32) as u8;
+                                }
+                                Error::PubkeyError => {
+                                    *ptr1.add(4).cast::<u8>() = (4i32) as u8;
+                                }
+                            }
+                        }
+                    };
+                    ptr1
+                }
+                #[doc(hidden)]
+                #[allow(non_snake_case)]
+                pub unsafe fn __post_return_method_watch_only_get_receive_address<
+                    T: GuestWatchOnly,
+                >(
+                    arg0: *mut u8,
+                ) {
+                    let l0 = i32::from(*arg0.add(0).cast::<u8>());
+                    match l0 {
+                        0 => {
+                            let l1 = *arg0.add(4).cast::<*mut u8>();
+                            let l2 = *arg0.add(8).cast::<usize>();
+                            _rt::cabi_dealloc(l1, l2, 1);
+                        }
+                        _ => (),
+                    }
+                }
                 pub trait Guest {
                     type WatchOnly: GuestWatchOnly;
                 }
@@ -418,7 +869,7 @@ pub mod exports {
                         }
                     }
 
-                    fn new(xpub: _rt::String, network: Network) -> Self;
+                    fn new(init: Initialization) -> Self;
                     fn new_address(&self) -> Result<_rt::String, Error>;
                     fn create_transaction(
                         &self,
@@ -426,56 +877,95 @@ pub mod exports {
                         amount: u64,
                         fee_rate: u64,
                     ) -> Result<_rt::Vec<u8>, Error>;
+                    fn get_utxos(&self) -> Result<_rt::Vec<PartialUtxo>, Error>;
+                    fn insert_utxos(&self, utxos: _rt::Vec<PartialUtxo>) -> Result<(), Error>;
+                    fn get_pubkeys(&self) -> Result<_rt::Vec<Pubkey>, Error>;
+                    fn balance(&self) -> Result<u64, Error>;
+                    fn get_receive_address(&self) -> Result<_rt::String, Error>;
                 }
                 #[doc(hidden)]
 
                 macro_rules! __export_component_wallet_types_0_1_0_cabi{
-    ($ty:ident with_types_in $($path_to_types:tt)*) => (const _: () = {
+  ($ty:ident with_types_in $($path_to_types:tt)*) => (const _: () = {
 
-      #[export_name = "component:wallet/types@0.1.0#[constructor]watch-only"]
-      unsafe extern "C" fn export_constructor_watch_only(arg0: *mut u8,arg1: usize,arg2: i32,) -> i32 {
-        $($path_to_types)*::_export_constructor_watch_only_cabi::<<$ty as $($path_to_types)*::Guest>::WatchOnly>(arg0, arg1, arg2)
-      }
-      #[export_name = "component:wallet/types@0.1.0#[method]watch-only.new-address"]
-      unsafe extern "C" fn export_method_watch_only_new_address(arg0: *mut u8,) -> *mut u8 {
-        $($path_to_types)*::_export_method_watch_only_new_address_cabi::<<$ty as $($path_to_types)*::Guest>::WatchOnly>(arg0)
-      }
-      #[export_name = "cabi_post_component:wallet/types@0.1.0#[method]watch-only.new-address"]
-      unsafe extern "C" fn _post_return_method_watch_only_new_address(arg0: *mut u8,) {
-        $($path_to_types)*::__post_return_method_watch_only_new_address::<<$ty as $($path_to_types)*::Guest>::WatchOnly>(arg0)
-      }
-      #[export_name = "component:wallet/types@0.1.0#[method]watch-only.create-transaction"]
-      unsafe extern "C" fn export_method_watch_only_create_transaction(arg0: *mut u8,arg1: *mut u8,arg2: usize,arg3: i64,arg4: i64,) -> *mut u8 {
-        $($path_to_types)*::_export_method_watch_only_create_transaction_cabi::<<$ty as $($path_to_types)*::Guest>::WatchOnly>(arg0, arg1, arg2, arg3, arg4)
-      }
-      #[export_name = "cabi_post_component:wallet/types@0.1.0#[method]watch-only.create-transaction"]
-      unsafe extern "C" fn _post_return_method_watch_only_create_transaction(arg0: *mut u8,) {
-        $($path_to_types)*::__post_return_method_watch_only_create_transaction::<<$ty as $($path_to_types)*::Guest>::WatchOnly>(arg0)
-      }
+    #[export_name = "component:wallet/types@0.1.0#[constructor]watch-only"]
+    unsafe extern "C" fn export_constructor_watch_only(arg0: i32,arg1: *mut u8,arg2: usize,arg3: i32,) -> i32 {
+      $($path_to_types)*::_export_constructor_watch_only_cabi::<<$ty as $($path_to_types)*::Guest>::WatchOnly>(arg0, arg1, arg2, arg3)
+    }
+    #[export_name = "component:wallet/types@0.1.0#[method]watch-only.new-address"]
+    unsafe extern "C" fn export_method_watch_only_new_address(arg0: *mut u8,) -> *mut u8 {
+      $($path_to_types)*::_export_method_watch_only_new_address_cabi::<<$ty as $($path_to_types)*::Guest>::WatchOnly>(arg0)
+    }
+    #[export_name = "cabi_post_component:wallet/types@0.1.0#[method]watch-only.new-address"]
+    unsafe extern "C" fn _post_return_method_watch_only_new_address(arg0: *mut u8,) {
+      $($path_to_types)*::__post_return_method_watch_only_new_address::<<$ty as $($path_to_types)*::Guest>::WatchOnly>(arg0)
+    }
+    #[export_name = "component:wallet/types@0.1.0#[method]watch-only.create-transaction"]
+    unsafe extern "C" fn export_method_watch_only_create_transaction(arg0: *mut u8,arg1: *mut u8,arg2: usize,arg3: i64,arg4: i64,) -> *mut u8 {
+      $($path_to_types)*::_export_method_watch_only_create_transaction_cabi::<<$ty as $($path_to_types)*::Guest>::WatchOnly>(arg0, arg1, arg2, arg3, arg4)
+    }
+    #[export_name = "cabi_post_component:wallet/types@0.1.0#[method]watch-only.create-transaction"]
+    unsafe extern "C" fn _post_return_method_watch_only_create_transaction(arg0: *mut u8,) {
+      $($path_to_types)*::__post_return_method_watch_only_create_transaction::<<$ty as $($path_to_types)*::Guest>::WatchOnly>(arg0)
+    }
+    #[export_name = "component:wallet/types@0.1.0#[method]watch-only.get-utxos"]
+    unsafe extern "C" fn export_method_watch_only_get_utxos(arg0: *mut u8,) -> *mut u8 {
+      $($path_to_types)*::_export_method_watch_only_get_utxos_cabi::<<$ty as $($path_to_types)*::Guest>::WatchOnly>(arg0)
+    }
+    #[export_name = "cabi_post_component:wallet/types@0.1.0#[method]watch-only.get-utxos"]
+    unsafe extern "C" fn _post_return_method_watch_only_get_utxos(arg0: *mut u8,) {
+      $($path_to_types)*::__post_return_method_watch_only_get_utxos::<<$ty as $($path_to_types)*::Guest>::WatchOnly>(arg0)
+    }
+    #[export_name = "component:wallet/types@0.1.0#[method]watch-only.insert-utxos"]
+    unsafe extern "C" fn export_method_watch_only_insert_utxos(arg0: *mut u8,arg1: *mut u8,arg2: usize,) -> *mut u8 {
+      $($path_to_types)*::_export_method_watch_only_insert_utxos_cabi::<<$ty as $($path_to_types)*::Guest>::WatchOnly>(arg0, arg1, arg2)
+    }
+    #[export_name = "component:wallet/types@0.1.0#[method]watch-only.get-pubkeys"]
+    unsafe extern "C" fn export_method_watch_only_get_pubkeys(arg0: *mut u8,) -> *mut u8 {
+      $($path_to_types)*::_export_method_watch_only_get_pubkeys_cabi::<<$ty as $($path_to_types)*::Guest>::WatchOnly>(arg0)
+    }
+    #[export_name = "cabi_post_component:wallet/types@0.1.0#[method]watch-only.get-pubkeys"]
+    unsafe extern "C" fn _post_return_method_watch_only_get_pubkeys(arg0: *mut u8,) {
+      $($path_to_types)*::__post_return_method_watch_only_get_pubkeys::<<$ty as $($path_to_types)*::Guest>::WatchOnly>(arg0)
+    }
+    #[export_name = "component:wallet/types@0.1.0#[method]watch-only.balance"]
+    unsafe extern "C" fn export_method_watch_only_balance(arg0: *mut u8,) -> *mut u8 {
+      $($path_to_types)*::_export_method_watch_only_balance_cabi::<<$ty as $($path_to_types)*::Guest>::WatchOnly>(arg0)
+    }
+    #[export_name = "component:wallet/types@0.1.0#[method]watch-only.get-receive-address"]
+    unsafe extern "C" fn export_method_watch_only_get_receive_address(arg0: *mut u8,) -> *mut u8 {
+      $($path_to_types)*::_export_method_watch_only_get_receive_address_cabi::<<$ty as $($path_to_types)*::Guest>::WatchOnly>(arg0)
+    }
+    #[export_name = "cabi_post_component:wallet/types@0.1.0#[method]watch-only.get-receive-address"]
+    unsafe extern "C" fn _post_return_method_watch_only_get_receive_address(arg0: *mut u8,) {
+      $($path_to_types)*::__post_return_method_watch_only_get_receive_address::<<$ty as $($path_to_types)*::Guest>::WatchOnly>(arg0)
+    }
 
-      const _: () = {
-        #[doc(hidden)]
-        #[export_name = "component:wallet/types@0.1.0#[dtor]watch-only"]
-        #[allow(non_snake_case)]
-        unsafe extern "C" fn dtor(rep: *mut u8) {
-          $($path_to_types)*::WatchOnly::dtor::<
-          <$ty as $($path_to_types)*::Guest>::WatchOnly
-          >(rep)
-        }
-      };
+    const _: () = {
+      #[doc(hidden)]
+      #[export_name = "component:wallet/types@0.1.0#[dtor]watch-only"]
+      #[allow(non_snake_case)]
+      unsafe extern "C" fn dtor(rep: *mut u8) {
+        $($path_to_types)*::WatchOnly::dtor::<
+        <$ty as $($path_to_types)*::Guest>::WatchOnly
+        >(rep)
+      }
+    };
 
-    };);
-  }
+  };);
+}
                 #[doc(hidden)]
                 pub(crate) use __export_component_wallet_types_0_1_0_cabi;
-                #[repr(align(4))]
-                struct _RetArea([::core::mem::MaybeUninit<u8>; 12]);
-                static mut _RET_AREA: _RetArea = _RetArea([::core::mem::MaybeUninit::uninit(); 12]);
+                #[repr(align(8))]
+                struct _RetArea([::core::mem::MaybeUninit<u8>; 16]);
+                static mut _RET_AREA: _RetArea = _RetArea([::core::mem::MaybeUninit::uninit(); 16]);
             }
         }
     }
 }
 mod _rt {
+    pub use alloc_crate::string::String;
+    pub use alloc_crate::vec::Vec;
 
     use core::fmt;
     use core::marker;
@@ -577,7 +1067,6 @@ mod _rt {
     pub fn run_ctors_once() {
         wit_bindgen_rt::run_ctors_once();
     }
-    pub use alloc_crate::vec::Vec;
     pub unsafe fn string_lift(bytes: Vec<u8>) -> String {
         if cfg!(debug_assertions) {
             String::from_utf8(bytes).unwrap()
@@ -585,7 +1074,6 @@ mod _rt {
             String::from_utf8_unchecked(bytes)
         }
     }
-    pub use alloc_crate::string::String;
     pub unsafe fn cabi_dealloc(ptr: *mut u8, size: usize, align: usize) {
         if size == 0 {
             return;
@@ -593,8 +1081,117 @@ mod _rt {
         let layout = alloc::Layout::from_size_align_unchecked(size, align);
         alloc::dealloc(ptr as *mut u8, layout);
     }
-    extern crate alloc as alloc_crate;
+
+    pub fn as_i32<T: AsI32>(t: T) -> i32 {
+        t.as_i32()
+    }
+
+    pub trait AsI32 {
+        fn as_i32(self) -> i32;
+    }
+
+    impl<'a, T: Copy + AsI32> AsI32 for &'a T {
+        fn as_i32(self) -> i32 {
+            (*self).as_i32()
+        }
+    }
+
+    impl AsI32 for i32 {
+        #[inline]
+        fn as_i32(self) -> i32 {
+            self as i32
+        }
+    }
+
+    impl AsI32 for u32 {
+        #[inline]
+        fn as_i32(self) -> i32 {
+            self as i32
+        }
+    }
+
+    impl AsI32 for i16 {
+        #[inline]
+        fn as_i32(self) -> i32 {
+            self as i32
+        }
+    }
+
+    impl AsI32 for u16 {
+        #[inline]
+        fn as_i32(self) -> i32 {
+            self as i32
+        }
+    }
+
+    impl AsI32 for i8 {
+        #[inline]
+        fn as_i32(self) -> i32 {
+            self as i32
+        }
+    }
+
+    impl AsI32 for u8 {
+        #[inline]
+        fn as_i32(self) -> i32 {
+            self as i32
+        }
+    }
+
+    impl AsI32 for char {
+        #[inline]
+        fn as_i32(self) -> i32 {
+            self as i32
+        }
+    }
+
+    impl AsI32 for usize {
+        #[inline]
+        fn as_i32(self) -> i32 {
+            self as i32
+        }
+    }
+
+    pub fn as_i64<T: AsI64>(t: T) -> i64 {
+        t.as_i64()
+    }
+
+    pub trait AsI64 {
+        fn as_i64(self) -> i64;
+    }
+
+    impl<'a, T: Copy + AsI64> AsI64 for &'a T {
+        fn as_i64(self) -> i64 {
+            (*self).as_i64()
+        }
+    }
+
+    impl AsI64 for i64 {
+        #[inline]
+        fn as_i64(self) -> i64 {
+            self as i64
+        }
+    }
+
+    impl AsI64 for u64 {
+        #[inline]
+        fn as_i64(self) -> i64 {
+            self as i64
+        }
+    }
     pub use alloc_crate::alloc;
+    pub unsafe fn bool_lift(val: u8) -> bool {
+        if cfg!(debug_assertions) {
+            match val {
+                0 => false,
+                1 => true,
+                _ => panic!("invalid bool discriminant"),
+            }
+        } else {
+            val != 0
+        }
+    }
+    extern crate alloc as alloc_crate;
 }
 
 /// Generates `#[no_mangle]` functions to export the specified type as the
@@ -628,19 +1225,28 @@ pub(crate) use __export_wallet_impl as export;
 #[cfg(target_arch = "wasm32")]
 #[link_section = "component-type:wit-bindgen:0.25.0:wallet:encoded world"]
 #[doc(hidden)]
-pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 561] = *b"\
-\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xb4\x03\x01A\x02\x01\
-A\x02\x01B\x10\x01m\x05\x07bitcoin\x07testnet\x08testnet4\x06signet\x07regtest\x04\
-\0\x07network\x03\0\0\x01q\x05\x0ecoin-selection\0\0\x04psbt\0\0\x18missing-non-\
-witness-utxo\0\0\x09no-pubkey\0\0\x0cpubkey-error\0\0\x04\0\x05error\x03\0\x02\x04\
-\0\x0awatch-only\x03\x01\x01i\x04\x01@\x02\x04xpubs\x07network\x01\0\x05\x04\0\x17\
-[constructor]watch-only\x01\x06\x01h\x04\x01j\x01s\x01\x03\x01@\x01\x04self\x07\0\
-\x08\x04\0\x1e[method]watch-only.new-address\x01\x09\x01p}\x01j\x01\x0a\x01\x03\x01\
-@\x04\x04self\x07\x09recepient\x0a\x06amountw\x08fee-ratew\0\x0b\x04\0%[method]w\
-atch-only.create-transaction\x01\x0c\x04\x01\x1ccomponent:wallet/types@0.1.0\x05\
-\0\x04\x01\x1dcomponent:wallet/wallet@0.1.0\x04\0\x0b\x0c\x01\0\x06wallet\x03\0\0\
-\0G\x09producers\x01\x0cprocessed-by\x02\x0dwit-component\x070.208.1\x10wit-bind\
-gen-rust\x060.25.0";
+pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 968] = *b"\
+\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xcb\x06\x01A\x02\x01\
+A\x02\x01B'\x01m\x05\x07bitcoin\x07testnet\x08testnet4\x06signet\x07regtest\x04\0\
+\x0fbitcoin-network\x03\0\0\x01q\x05\x0ecoin-selection\0\0\x04psbt\0\0\x18missin\
+g-non-witness-utxo\0\0\x09no-pubkey\0\0\x0cpubkey-error\0\0\x04\0\x05error\x03\0\
+\x02\x01r\x02\x04xpubs\x07network\x01\x04\0\x06config\x03\0\x04\x01p}\x01q\x02\x09\
+old-state\x01\x06\0\x06config\x01\x05\0\x04\0\x0einitialization\x03\0\x07\x01r\x05\
+\x04txid\x06\x04vouty\x06amountw\x06script\x06\x08is-spent\x7f\x04\0\x0cpartial-\
+utxo\x03\0\x09\x01p}\x04\0\x06pubkey\x03\0\x0b\x04\0\x0awatch-only\x03\x01\x01i\x0d\
+\x01@\x01\x04init\x08\0\x0e\x04\0\x17[constructor]watch-only\x01\x0f\x01h\x0d\x01\
+j\x01s\x01\x03\x01@\x01\x04self\x10\0\x11\x04\0\x1e[method]watch-only.new-addres\
+s\x01\x12\x01j\x01\x06\x01\x03\x01@\x04\x04self\x10\x09recepient\x06\x06amountw\x08\
+fee-ratew\0\x13\x04\0%[method]watch-only.create-transaction\x01\x14\x01p\x0a\x01\
+j\x01\x15\x01\x03\x01@\x01\x04self\x10\0\x16\x04\0\x1c[method]watch-only.get-utx\
+os\x01\x17\x01j\0\x01\x03\x01@\x02\x04self\x10\x05utxos\x15\0\x18\x04\0\x1f[meth\
+od]watch-only.insert-utxos\x01\x19\x01p\x0c\x01j\x01\x1a\x01\x03\x01@\x01\x04sel\
+f\x10\0\x1b\x04\0\x1e[method]watch-only.get-pubkeys\x01\x1c\x01j\x01w\x01\x03\x01\
+@\x01\x04self\x10\0\x1d\x04\0\x1a[method]watch-only.balance\x01\x1e\x04\0&[metho\
+d]watch-only.get-receive-address\x01\x12\x04\x01\x1ccomponent:wallet/types@0.1.0\
+\x05\0\x04\x01\x1dcomponent:wallet/wallet@0.1.0\x04\0\x0b\x0c\x01\0\x06wallet\x03\
+\0\0\0G\x09producers\x01\x0cprocessed-by\x02\x0dwit-component\x070.208.1\x10wit-\
+bindgen-rust\x060.25.0";
 
 #[inline(never)]
 #[doc(hidden)]

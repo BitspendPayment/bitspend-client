@@ -3,9 +3,9 @@ mod bindings;
 
 use std::{cell::RefCell, str::FromStr};
 
-use bindings::exports::component::wallet::{self, types::{Error, Guest, Network as ConfigNetwork, GuestWatchOnly, WatchOnly}};
+use bindings::exports::component::wallet::{self, types::{Error, Guest, GuestWatchOnly, BitcoinNetwork as ConfigNetwork, PartialUtxo, WatchOnly}};
 
-use bitcoin::{amount, bip32::Xpub, Amount, FeeRate, Network};
+use bitcoin::{bip32::Xpub, hashes::Hash, Amount, FeeRate, Network, OutPoint, Txid};
 use rand_core::RngCore;
 use wasi::random::random::{get_random_u64, get_random_bytes};
 
@@ -64,16 +64,49 @@ impl From<errors::Error> for  Error {
     }
 }
 
+impl Into <wallet::types::PartialUtxo> for types::PartialUtxo {
+    fn into(self) -> wallet::types::PartialUtxo {
+        return PartialUtxo {
+            txid: self.outpoint.txid.as_raw_hash().to_byte_array().to_vec(),
+            vout: self.outpoint.vout,
+            script: self.script,
+            is_spent: self.is_spent,
+            amount: self.amount,
+        }
+    }
+}
+
+impl From<wallet::types::PartialUtxo> for types::PartialUtxo {
+    fn from(value: wallet::types::PartialUtxo) -> Self {
+        let txid = Txid::from_slice(&value.txid).unwrap();
+        let outpoint = OutPoint{ txid , vout: value.vout };
+        return Self {
+            outpoint,
+            amount: value.amount,
+            is_spent: value.is_spent,
+            script: value.script,
+        }
+    }
+} 
+
 impl GuestWatchOnly for WatchOnyWallet {
-    fn new(xpub: String, network: ConfigNetwork) -> Self {
-        let xpub = Xpub::from_str(&xpub).unwrap();
-        let wallet =  watch_wallet::WatchOnly::new(xpub, network.into());
-        Self{ inner:  RefCell::new(wallet)}
+    fn new(init: wallet::types::Initialization) -> Self {
+        match init {
+            wallet::types::Initialization::OldState(state) => {
+                let wallet =  watch_wallet::WatchOnly::from(state);
+                Self{ inner:  RefCell::new(wallet)}
+            },
+            wallet::types::Initialization::Config(config) => {
+                let xpub = Xpub::from_str(&config.xpub).unwrap();
+                let wallet =  watch_wallet::WatchOnly::new(xpub, config.network.into());
+                Self{ inner:  RefCell::new(wallet)}
+            },
+        }
 
     }
 
     fn new_address(&self) -> Result<String, Error> {
-        return self.inner.borrow_mut().derive_p2wpkh_receive_address().map_err(|err| {
+        return self.inner.borrow_mut().get_receive_address().map_err(|err| {
             err.into()
         })
     }
@@ -88,6 +121,30 @@ impl GuestWatchOnly for WatchOnyWallet {
         let amount = Amount::from_sat(amount);
         return self.inner.borrow_mut().create_psbt_tx(recipient, fee_rate, amount, & mut WasiRandom).map_err(|err| err.into())
     }
+
+    
+    fn get_utxos(&self) -> Result<Vec<wallet::types::PartialUtxo>, Error> {
+        let partial_utxos = self.inner.borrow_mut().get_utxos().map_err(Error::from)?;
+        return Ok(partial_utxos.into_iter().map(|utxo| utxo.into()).collect())
+    }
+    
+    fn insert_utxos(&self, utxos: Vec<wallet::types::PartialUtxo>) -> Result<(), Error> {
+        let mapped_utxos: Vec<_> = utxos.into_iter().map(From::from).collect();
+        return self.inner.borrow_mut().insert_utxos(mapped_utxos).map_err(|err| err.into())
+    }
+    
+    fn get_pubkeys(&self) -> Result<Vec<wallet::types::Pubkey>, Error> {
+        return self.inner.borrow_mut().get_pubkeys().map_err(|err| err.into())
+    }
+    
+    fn balance(&self) -> Result<u64, Error> {
+        return self.inner.borrow_mut().balance().map(|amount| amount.to_sat()).map_err(|err| err.into())
+    }
+    
+    fn get_receive_address(&self) -> Result<String, Error> {
+        return self.inner.borrow_mut().get_receive_address().map_err(|err| err.into())
+    }
+
 }
 
 

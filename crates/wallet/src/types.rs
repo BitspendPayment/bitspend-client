@@ -11,6 +11,7 @@
 
 use core::convert::AsRef;
 
+use bitcoin::hashes::Hash;
 use bitcoin::transaction::{OutPoint, Sequence, TxOut};
 use bitcoin::{psbt, Weight};
 
@@ -47,7 +48,7 @@ impl AsRef<[u8]> for KeychainKind {
 
 
 /// A [`Utxo`] with its `satisfaction_weight`.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct WeightedUtxo {
     /// The weight of the witness data and `scriptSig` expressed in [weight units]. This is used to
     /// properly maintain the feerate when adding this input to a transaction during coin selection.
@@ -58,7 +59,7 @@ pub struct WeightedUtxo {
     pub utxo: Utxo,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 /// An unspent transaction output (UTXO).
 pub struct Utxo {
    /// Reference to a transaction output
@@ -75,6 +76,34 @@ pub struct Utxo {
    pub chain_position: Option<u32>,
     
 }
+
+impl Into<PartialUtxo> for Utxo {
+    fn into(self) -> PartialUtxo {
+        return PartialUtxo {
+            outpoint: self.outpoint,
+            amount: self.txout.value.to_sat(),
+            script: self.txout.script_pubkey.to_bytes(),
+            is_spent: self.is_spent
+        }
+    }
+}
+
+pub struct PartialUtxo {
+    pub outpoint: OutPoint,
+    pub amount: u64,
+    pub script: Vec<u8>,
+    pub is_spent: bool
+
+
+}
+
+#[derive(serde::Deserialize, Serialize)]
+#[allow(dead_code)]
+pub struct PubkeyDetails {
+    pub key_type: KeychainKind,
+    pub key_depth: u32,
+}
+
 
 impl Utxo {
     /// Get the location of the UTXO

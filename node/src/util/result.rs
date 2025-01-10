@@ -55,7 +55,9 @@ pub enum Error {
     /// Slice Error
     SliceError(String),
     /// Peer Not Found Error
-    PeerNotFound
+    PeerNotFound,
+    ///
+    WalletError(u32)
 }
 
 impl Error {
@@ -88,6 +90,7 @@ impl Error {
             Error::FilterMatchEror => 25,
             Error::NetworkError => 26,
             Error::FetchHeader(_) => 27,
+            Error::WalletError(_) => 28,
         }
     }
 }
@@ -122,6 +125,7 @@ impl std::fmt::Display for Error {
             Error::FilterMatchEror => f.write_str(&format!("Filter Match Error")),
             Error::NetworkError => f.write_str(&format!("Network Error")),
             Error::FetchHeader(e) => f.write_str(&format!("Fetching Header Error: {}", e)),
+            Error::WalletError(_) => f.write_str(&format!("Wallet Error")),
 
         }
     }
@@ -157,6 +161,7 @@ impl std::error::Error for Error {
             Error::FilterMatchEror => "Filter Match Error",
             Error::NetworkError => "Network Error",
             Error::FetchHeader(_) => "Fetch Header Error",
+            Error::WalletError(_) => "Wallet Error",
         }
     }
 

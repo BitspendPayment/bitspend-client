@@ -3,6 +3,7 @@ package component:node@0.1.0;
 /// An example world for the component to target.
 world nodeworld {
     import component:kv/types@0.1.0;
+    import component:wallet/types@0.1.0;
     export types;
 }
 
@@ -28,15 +29,22 @@ interface types {
         stream-error
     }
 
-    record socket-address {
-        ip: string, 
+    record ipv4-socket-adress {
+        address: tuple<u8, u8, u8, u8>, 
         port: u16
     }
 
     enum bitcoin-network {
-        mainnet,
+        bitcoin,
         testnet,
+        testnet4,
+        signet,
         regtest,
+    }
+
+    variant initialization {
+        old-state,
+        config(node-config)
     }
 
     record offering-bargain {
@@ -47,20 +55,20 @@ interface types {
     }
 
     record node-config {
-        wallet-address: string,
         genesis-blockhash: string,
         network: bitcoin-network,
-        socket-address: socket-address
+        socket-address: ipv4-socket-adress,
+        xpub: string
     }
 
 
     resource client-node {
 
-        constructor(config: node-config);
+        constructor(init: initialization);
 
-        get-balance: func() -> result<s64, u32>;
+        get-balance: func() -> result<u64, u32>;
 
-        add-filter: func(filter: string) -> result<_, u32>;
+        get-receive-address: func() -> result<string, u32>;
 
      
 
