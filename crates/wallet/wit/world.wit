@@ -1,6 +1,35 @@
-package component:wallet;
+package component:wallet@0.1.0;
+
+interface types {
+
+    enum network {
+        bitcoin,
+        testnet,
+        testnet4,
+        signet,
+        regtest,
+    }
+
+    variant error {
+        coin-selection,
+        psbt,
+        missing-non-witness-utxo,
+        no-pubkey,
+        pubkey-error
+    }
+
+    resource watch-only {
+
+        constructor(xpub: string, network: network );
+
+        new-address: func() -> result<string, error>;
+
+        create-transaction: func(recepient: list<u8>, amount: u64, fee-rate: u64) -> result<list<u8>, error>;
+   
+    }
+}
 
 /// An example world for the component to target.
-world example {
-    export hello-world: func() -> string;
+world wallet {
+    export types;
 }
