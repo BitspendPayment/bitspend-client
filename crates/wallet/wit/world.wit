@@ -1,6 +1,66 @@
-package component:wallet;
+package component:wallet@0.1.0;
+
+interface types {
+
+    enum bitcoin-network {
+        bitcoin,
+        testnet,
+        testnet4,
+        signet,
+        regtest,
+    }
+
+    variant error {
+        coin-selection,
+        psbt,
+        missing-non-witness-utxo,
+        no-pubkey,
+        pubkey-error
+    }
+
+    variant initialization {
+        old-state(list<u8>),
+        config(config)
+    }
+
+    record config {
+        xpub: string, 
+        network: bitcoin-network 
+    }
+
+    record partial-utxo {
+        txid: list<u8>,
+        vout: u32,
+        amount: u64,
+        script: list<u8>,
+        is-spent: bool
+    }
+
+    type pubkey = list<u8>;
+
+    resource watch-only {
+
+        constructor(init: initialization);
+
+        new-address: func() -> result<string, error>;
+
+        create-transaction: func(recepient: list<u8>, amount: u64, fee-rate: u64) -> result<list<u8>, error>;
+
+        get-utxos: func() -> result<list<partial-utxo>, error>;
+
+        insert-utxos: func(utxos: list<partial-utxo>) -> result<_, error>;
+
+        get-pubkeys: func() -> result<list<pubkey>, error>;
+
+        balance: func() -> result<u64, error>;
+
+        get-receive-address: func() -> result<string, error>;
+
+   
+    }
+}
 
 /// An example world for the component to target.
-world example {
-    export hello-world: func() -> string;
+world wallet {
+    export types;
 }

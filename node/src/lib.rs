@@ -2,9 +2,12 @@
 mod bindings;
 use std::{cell::RefCell};
 
-use node::Node;
-use bindings::exports::component::node::types::{Guest, GuestClientNode, NodeConfig};
-use bindings::component::kv::types::{Kvstore };
+use node::{ CustomIPV4SocketAddress, Node, NodeConfig};
+use bindings::component::kv::types::{Kvstore};
+use bindings::exports::component::node::types::{BitcoinNetwork as WasiBitcoinNetwork, Guest, GuestClientNode, Initialization, NodeConfig as WasiNodeConfig };
+use bitcoin::network as bitcoin_network;
+use util::Hash256;
+
 
 mod node;
 mod p2p;
@@ -19,17 +22,65 @@ struct BitcoinNode {
     inner: RefCell<Node>,
 }
 
+
+impl From<WasiBitcoinNetwork> for bitcoin_network::Network {
+    fn from(val: WasiBitcoinNetwork) -> Self {
+        match val {
+            WasiBitcoinNetwork::Bitcoin => bitcoin_network::Network::Bitcoin,
+            WasiBitcoinNetwork::Testnet => bitcoin_network::Network::Testnet,
+            WasiBitcoinNetwork::Regtest => bitcoin_network::Network::Regtest,
+            WasiBitcoinNetwork::Testnet4 => bitcoin_network::Network::Testnet4,
+            WasiBitcoinNetwork::Signet => bitcoin_network::Network::Signet,
+        }
+    }
+}
+
+
+
+
+impl From<WasiNodeConfig> for NodeConfig {
+    fn from(val: WasiNodeConfig) -> Self {
+        let WasiNodeConfig { network, socket_address, genesis_blockhash, xpub } = val;
+
+        // Convert the network type
+        let network: bitcoin_network::Network = network.into();
+
+        // Decode the  genesis blockhash with error handling
+        let genesis_blockhash = Hash256::decode(&genesis_blockhash).expect("Failed to decode genesis blockhash");
+
+        // Construct and return the NodeConfig
+        NodeConfig {
+            network,
+            socket_address: CustomIPV4SocketAddress{ ip: socket_address.address, port: socket_address.port  },
+            genesis_blockhash,
+            xpub
+        }
+    }
+}
+
+
+
+
+
 impl GuestClientNode for BitcoinNode {
-    fn get_balance(&self) -> Result<i64, u32> {
+    fn get_balance(&self) -> Result<u64, u32> {
         return  self.inner.borrow_mut().balance().map_err(|err| err.to_error_code());
     }
 
-    fn add_filter(&self, filter: String) -> Result<(), u32> {
-        return  self.inner.borrow_mut().add_filter(filter).map_err(|err| err.to_error_code());
-    }
+    fn new(init: Initialization) -> Self {
+        match init {
+            Initialization::OldState => {
+                Self{ inner:  Node::restore().into()}
+            },
+            Initialization::Config(config) => {
+                Self{ inner:  Node::new(config.into()).into()}
+            },
+        }
 
-    fn new(config: NodeConfig) -> Self {
-        Self{ inner:  Node::new(config.into(), Kvstore::new().into()).into()}
+    }
+    
+    fn get_receive_address(&self) -> Result<String, u32> {
+        return  self.inner.borrow_mut().get_receive_address().map_err(|err| err.to_error_code());
     }
 }
 

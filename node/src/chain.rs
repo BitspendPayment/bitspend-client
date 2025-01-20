@@ -1,16 +1,15 @@
 use std::{iter::zip, sync::Arc};
-use crate::{bindings, messages::{block_locator::NO_HASH_STOP, compact_filter::CompactFilter, tx_out::TxOut, Inv, InvVect}, util::{self, sha256d, Error}};
+use crate::{bindings::component::wallet::types::{PartialUtxo, WatchOnly}, messages::{block_locator::NO_HASH_STOP, compact_filter::CompactFilter, tx_out::TxOut, Inv, InvVect}, util::{self, sha256d, Error}};
 
 use bitcoin::network as bitcoin_network;
-use bindings::component::kv::types::Error as StoreError ;
 use serde::Serialize;
 
-use crate::{db::KeyValueDb, node::CustomIPV4SocketAddress, p2p::{P2PControl, P2P}, util::Hash256};
+use crate::{node::CustomIPV4SocketAddress, p2p::{P2PControl, P2P}, util::Hash256};
 
 pub struct CompactChain {
     p2p: P2P,
-    db: Arc<KeyValueDb>,
     chain_state: ChainState,
+    wallet: Arc<WatchOnly>,
 }
 
 
@@ -18,8 +17,6 @@ pub struct CompactChain {
 struct ChainState {
     last_block_hash: Hash256,
     last_block_height: u64,
-    filters: Vec<Vec<u8>>,
-    utxos: Vec<Utxo>
 }
 
 #[derive(serde::Deserialize, Serialize, Clone)]
@@ -30,45 +27,31 @@ pub struct Utxo  {
 
 }
 
-const CHAIN_STATE_KEY: &str = "chain_state";
+
 const MAX_HEADER_LEN: usize = 2000;
 const FILTER_SIZE: usize = 500;
 
 
 impl CompactChain {
 
-    pub fn new(socket: CustomIPV4SocketAddress, network: bitcoin_network::Network, db: Arc<KeyValueDb>  ) -> Self {
+    pub fn new(socket: CustomIPV4SocketAddress, network: bitcoin_network::Network, wallet: Arc<WatchOnly>  ) -> Self {
         let mut p2p = P2P::new();
         p2p.connect_peer(socket, network).expect("Failed to connect to peer");
 
-        match db.get(CHAIN_STATE_KEY.to_string()) {
-             Ok(chain_state) =>  {
-                let deserialized_chain_state: ChainState = bincode::deserialize(&chain_state).unwrap();
-                Self{ p2p, db, chain_state: deserialized_chain_state }
-             }
-            Err(Error::DBError(StoreError::EntryNotFound)) => {
-                let last_block_hash = Hash256::default();
-                let last_block_height = 0;
-                Self{ p2p, db, chain_state: ChainState{ last_block_hash, last_block_height, utxos: vec![], filters: vec![] } }
-            },
-            Err(_) => {
-                panic!("Cannot get chainstate")
-            }
-        }
+        let last_block_hash = Hash256::default();
+        let last_block_height = 0;
+        Self{ p2p, chain_state: ChainState{ last_block_hash, last_block_height }, wallet }
+
     }
 
-    pub fn add_filter(& mut self, filter: Vec<u8>) -> Result<(), Error> {
+    pub fn restore(socket: CustomIPV4SocketAddress, network: bitcoin_network::Network, wallet: Arc<WatchOnly>, state: Vec<u8> ) -> Self {
+        let mut p2p = P2P::new();
+        p2p.connect_peer(socket, network).expect("Failed to connect to peer");
 
-        self.chain_state.filters.push(filter);
-        let binary_chain_state: Vec<u8> = bincode::serialize(&self.chain_state).map_err(|e| Error::SerializationError(e.to_string()))?;
-        self.db.insert(CHAIN_STATE_KEY.to_string(), binary_chain_state)?;
-
-        Ok(())
+        let chain_state: ChainState = bincode::deserialize(&state).unwrap();
+        Self{ p2p, chain_state: chain_state, wallet }
     }
 
-    pub fn get_utxos(& mut self) -> Result<Vec<Utxo>, Error> {
-        return Ok(self.chain_state.utxos.clone());
-    }
 
     fn get_and_verify_compact_filters(& mut self, start_height: u32, last_block_hash: Hash256) -> Result<Vec<CompactFilter>, Error> {
         let filter_header = self.p2p.get_compact_filter_headers(start_height, last_block_hash).map_err(|err| Error::FetchCompactFilterHeader(err.to_error_code()))?;
@@ -85,11 +68,12 @@ impl CompactChain {
     }
 
     fn fetch_and_save_utxos(&mut self, filters: Vec<CompactFilter>) -> Result<(), Error> {
+        let pub_keys = &self.wallet.get_pubkeys().map_err(|_| Error::WalletError(1))?;
 
         let blockhash_present: Vec<_> = filters.into_iter().filter_map(|filter| {
             let filter_algo = util::block_filter::BlockFilter::new(&filter.filter_bytes);
-            let filter_query = &self.chain_state.filters;
-            let result = filter_algo.match_any(&filter.block_hash, filter_query.clone().into_iter()).unwrap();
+            
+            let result = filter_algo.match_any(&filter.block_hash, pub_keys.clone().into_iter()).unwrap();
             match result {
                 true => Some(filter.block_hash),
                 false => None,
@@ -108,12 +92,12 @@ impl CompactChain {
 
         let blocks = self.p2p.get_block(Inv{ objects: block_inv}).map_err(|err| Error::FetchBlock(err.to_error_code()))?;
 
-        let mut new_utxos = self.chain_state.utxos.clone();
+        let mut utxos = self.wallet.get_utxos().map_err(|_| Error::WalletError(1))?;
         for block in blocks {
              for txn in block.txns {
                  for (index, output) in txn.outputs.iter().enumerate() {
-                    if self.chain_state.filters.contains(&output.lock_script) {
-                        new_utxos.push(Utxo { tx_out: output.to_owned(), hash: txn.hash(), index });
+                    if pub_keys.contains(&output.lock_script) {
+                        utxos.push(PartialUtxo { amount: output.satoshis as u64, txid:  txn.hash().0.to_vec(), vout: index as u32, script: output.lock_script.clone(), is_spent: false });
                     }
                  }
 
@@ -123,18 +107,15 @@ impl CompactChain {
                    } 
 
                    //TODO: Ensure all inputs are included
-                   for (index,utxo) in  new_utxos.clone().iter().enumerate() {
-                        if utxo.hash == input.prev_output.hash && utxo.index as u32 == input.prev_output.index {
-                            new_utxos.remove(index);
+                   for (index,utxo) in  utxos.clone().iter().enumerate() {
+                        if utxo.txid == input.prev_output.hash.0.to_vec() && utxo.vout == input.prev_output.index {
+                            utxos[index].is_spent  = true;
                         }       
                    } 
                 }
              }
         }
-        self.chain_state.utxos = new_utxos;
-        let binary_chain_state: Vec<u8> = bincode::serialize(&self.chain_state).map_err(|e| Error::SerializationError(e.to_string()))?;
-        self.db.insert(CHAIN_STATE_KEY.to_string(), binary_chain_state)?;
-
+        self.wallet.insert_utxos(&utxos);
         Ok(())
 
     }
@@ -192,12 +173,7 @@ impl CompactChain {
             self.chain_state.last_block_height = end_block;
             self.chain_state.last_block_hash = last_block_hash;
         }  
-
         
-
-        let binary_chain_state: Vec<u8> = bincode::serialize(&self.chain_state).map_err(|e| Error::SerializationError(e.to_string()))?;
-        self.db.insert(CHAIN_STATE_KEY.to_string(), binary_chain_state)?;
-
         Ok(())
         
     }

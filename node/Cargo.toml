@@ -7,7 +7,7 @@ edition = "2021"
 wit-bindgen-rt = { version = "0.28.0", features = ["bitflags"] }
 tokio = { version = "1.38.1", features = ["sync"] }
 mio = "1.0.0"
-bitcoin = { version = "0.32.2", default-features = false }
+bitcoin = { version = "0.32.2", default-features = false, features = ["serde"]  }
 wasi = "0.13.1+wasi-0.2.0"
 byteorder = "1.2"
 libsecp256k1 ={ version = "0.7.1", default-features = false }
@@ -41,3 +41,4 @@ path = "wit"
 
 [package.metadata.component.target.dependencies]
 "component:kv" = {path = "../crates/kv/wit"}
+"component:wallet" = {path = "../crates/wallet/wit"}

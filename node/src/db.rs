@@ -3,6 +3,11 @@ use crate::{bindings, util::Error};
 
 use bindings::component::kv::types::Kvstore ;
 
+
+pub const CHAIN_STATE_KEY: &str = "chain_state";
+pub const WALLET_STATE_KEY: &str = "wallet_state";
+pub const NODE_STATE_KEY: &str = "node_state";
+
 pub struct KeyValueDb {
     conn: Arc<Kvstore>
 }
