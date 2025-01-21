@@ -1,15 +1,9 @@
-use std::cell::RefCell;
 use std::sync::Arc;
-use std::{hash::Hash, iter::zip, vec};
+use bitcoin::network as bitcoin_network;
 
-use bitcoin::{
-    block, network as bitcoin_network,
-};
-
-use crate::bindings::component::kv::types::{Kvstore, Error as StoreError };
+use crate::bindings::component::kv::types::Kvstore ;
 use crate::bindings::component::wallet::types::{WatchOnly, Initialization, Config as WalletConfig, BitcoinNetwork as WalletBitcoinNetwork };
 use serde::Serialize;
-use wasi::sockets::network::Ipv4SocketAddress;
 
 use crate::chain::CompactChain;
 use crate::db::{KeyValueDb, CHAIN_STATE_KEY, WALLET_STATE_KEY};
@@ -79,7 +73,7 @@ impl Node {
 
         let wallet = Arc::new(WatchOnly::new(&Initialization::Config(node_config.clone().into())));
          
-        let chain = CompactChain::new(node_config.socket_address.clone(), node_config.network, wallet.clone());
+        let chain = CompactChain::new(node_config.socket_address.clone(), node_config.network, node_config.genesis_blockhash, wallet.clone());
 
         Self { chain, wallet, node_state: NodeState{ socket_address: node_config.socket_address, network: node_config.network }, db: db.clone() }
 

@@ -1,8 +1,5 @@
 [workspace]
 resolver = "2"
 members = [
-  "node", "tests/runner", "crates/kv", "crates/wallet"]
+  "node", "client-test", "crates/kv", "crates/wallet"]
 
-exclude = [
-  "crates/tbdex",
-]

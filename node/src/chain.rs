@@ -34,11 +34,11 @@ const FILTER_SIZE: usize = 500;
 
 impl CompactChain {
 
-    pub fn new(socket: CustomIPV4SocketAddress, network: bitcoin_network::Network, wallet: Arc<WatchOnly>  ) -> Self {
+    pub fn new(socket: CustomIPV4SocketAddress, network: bitcoin_network::Network, genesis_block: Hash256,  wallet: Arc<WatchOnly>  ) -> Self {
         let mut p2p = P2P::new();
         p2p.connect_peer(socket, network).expect("Failed to connect to peer");
 
-        let last_block_hash = Hash256::default();
+        let last_block_hash = genesis_block;
         let last_block_height = 0;
         Self{ p2p, chain_state: ChainState{ last_block_hash, last_block_height }, wallet }
 
@@ -69,7 +69,8 @@ impl CompactChain {
 
     fn fetch_and_save_utxos(&mut self, filters: Vec<CompactFilter>) -> Result<(), Error> {
         let pub_keys = &self.wallet.get_pubkeys().map_err(|_| Error::WalletError(1))?;
-
+        println!("pub key is here {:?}", pub_keys.clone());
+        println!("thsi is filters {:?}", filters.clone());
         let blockhash_present: Vec<_> = filters.into_iter().filter_map(|filter| {
             let filter_algo = util::block_filter::BlockFilter::new(&filter.filter_bytes);
             
@@ -79,12 +80,12 @@ impl CompactChain {
                 false => None,
             }
         }).collect();
-
+        println!("reached here");
         if blockhash_present.is_empty() {
+            println!("its empty");
             return Ok(());
         }
 
-        
 
         let block_inv: Vec<_> = blockhash_present.into_iter().map(|hash| {
             InvVect{ obj_type: 2, hash }
@@ -115,7 +116,8 @@ impl CompactChain {
                 }
              }
         }
-        self.wallet.insert_utxos(&utxos);
+        println!("this are the utxos {:?}", utxos.clone());
+        self.wallet.insert_utxos(&utxos).unwrap();
         Ok(())
 
     }
