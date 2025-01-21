@@ -1,0 +1,26 @@
+[package]
+name = "client-test"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+wasmtime = "24.0.0"
+wasmtime-wasi = "24.0.0"
+wasmtime-wasi-http = "24.0.0"
+bitcoin = { version = "0.32.2"  }
+rand = "0.8.5"
+bitcoincore-rpc = "0.19.0"
+reqwest = { version = "0.11", features = ["blocking","json"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+
+[build-dependencies]
+wit-component = "0.212.0"
+serde_yaml = "0.9.34+deprecated"
+cargo_metadata = "0.18.1"
+
+
+[package.metadata.runnercomponent]
+"node" = {path = "../node/wit/world.wit"}
+"kv" = {path = "../crates/kv/wit/world.wit"}
