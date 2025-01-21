@@ -24,7 +24,9 @@ interface types {
     }
 
     record config {
-        xpub: string, 
+        xpub: string,
+        account-derivation: string,
+        master-fingerprint: string, 
         network: bitcoin-network 
     }
 

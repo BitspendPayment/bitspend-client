@@ -95,12 +95,16 @@ pub mod exports {
                 #[derive(Clone)]
                 pub struct Config {
                     pub xpub: _rt::String,
+                    pub account_derivation: _rt::String,
+                    pub master_fingerprint: _rt::String,
                     pub network: BitcoinNetwork,
                 }
                 impl ::core::fmt::Debug for Config {
                     fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
                         f.debug_struct("Config")
                             .field("xpub", &self.xpub)
+                            .field("account-derivation", &self.account_derivation)
+                            .field("master-fingerprint", &self.master_fingerprint)
                             .field("network", &self.network)
                             .finish()
                     }
@@ -289,35 +293,45 @@ pub mod exports {
                     arg0: i32,
                     arg1: *mut u8,
                     arg2: usize,
-                    arg3: i32,
+                    arg3: *mut u8,
+                    arg4: usize,
+                    arg5: *mut u8,
+                    arg6: usize,
+                    arg7: i32,
                 ) -> i32 {
                     #[cfg(target_arch = "wasm32")]
                     _rt::run_ctors_once();
-                    let v2 = match arg0 {
+                    let v4 = match arg0 {
                         0 => {
-                            let e2 = {
+                            let e4 = {
                                 let len0 = arg2;
 
                                 _rt::Vec::from_raw_parts(arg1.cast(), len0, len0)
                             };
-                            Initialization::OldState(e2)
+                            Initialization::OldState(e4)
                         }
                         n => {
                             debug_assert_eq!(n, 1, "invalid enum discriminant");
-                            let e2 = {
+                            let e4 = {
                                 let len1 = arg2;
                                 let bytes1 = _rt::Vec::from_raw_parts(arg1.cast(), len1, len1);
+                                let len2 = arg4;
+                                let bytes2 = _rt::Vec::from_raw_parts(arg3.cast(), len2, len2);
+                                let len3 = arg6;
+                                let bytes3 = _rt::Vec::from_raw_parts(arg5.cast(), len3, len3);
 
                                 Config {
                                     xpub: _rt::string_lift(bytes1),
-                                    network: BitcoinNetwork::_lift(arg3 as u8),
+                                    account_derivation: _rt::string_lift(bytes2),
+                                    master_fingerprint: _rt::string_lift(bytes3),
+                                    network: BitcoinNetwork::_lift(arg7 as u8),
                                 }
                             };
-                            Initialization::Config(e2)
+                            Initialization::Config(e4)
                         }
                     };
-                    let result3 = WatchOnly::new(T::new(v2));
-                    (result3).take_handle() as i32
+                    let result5 = WatchOnly::new(T::new(v4));
+                    (result5).take_handle() as i32
                 }
                 #[doc(hidden)]
                 #[allow(non_snake_case)]
@@ -889,8 +903,8 @@ pub mod exports {
   ($ty:ident with_types_in $($path_to_types:tt)*) => (const _: () = {
 
     #[export_name = "component:wallet/types@0.1.0#[constructor]watch-only"]
-    unsafe extern "C" fn export_constructor_watch_only(arg0: i32,arg1: *mut u8,arg2: usize,arg3: i32,) -> i32 {
-      $($path_to_types)*::_export_constructor_watch_only_cabi::<<$ty as $($path_to_types)*::Guest>::WatchOnly>(arg0, arg1, arg2, arg3)
+    unsafe extern "C" fn export_constructor_watch_only(arg0: i32,arg1: *mut u8,arg2: usize,arg3: *mut u8,arg4: usize,arg5: *mut u8,arg6: usize,arg7: i32,) -> i32 {
+      $($path_to_types)*::_export_constructor_watch_only_cabi::<<$ty as $($path_to_types)*::Guest>::WatchOnly>(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7)
     }
     #[export_name = "component:wallet/types@0.1.0#[method]watch-only.new-address"]
     unsafe extern "C" fn export_method_watch_only_new_address(arg0: *mut u8,) -> *mut u8 {
@@ -1225,28 +1239,28 @@ pub(crate) use __export_wallet_impl as export;
 #[cfg(target_arch = "wasm32")]
 #[link_section = "component-type:wit-bindgen:0.25.0:wallet:encoded world"]
 #[doc(hidden)]
-pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 968] = *b"\
-\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xcb\x06\x01A\x02\x01\
+pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 1008] = *b"\
+\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xf3\x06\x01A\x02\x01\
 A\x02\x01B'\x01m\x05\x07bitcoin\x07testnet\x08testnet4\x06signet\x07regtest\x04\0\
 \x0fbitcoin-network\x03\0\0\x01q\x05\x0ecoin-selection\0\0\x04psbt\0\0\x18missin\
 g-non-witness-utxo\0\0\x09no-pubkey\0\0\x0cpubkey-error\0\0\x04\0\x05error\x03\0\
-\x02\x01r\x02\x04xpubs\x07network\x01\x04\0\x06config\x03\0\x04\x01p}\x01q\x02\x09\
-old-state\x01\x06\0\x06config\x01\x05\0\x04\0\x0einitialization\x03\0\x07\x01r\x05\
-\x04txid\x06\x04vouty\x06amountw\x06script\x06\x08is-spent\x7f\x04\0\x0cpartial-\
-utxo\x03\0\x09\x01p}\x04\0\x06pubkey\x03\0\x0b\x04\0\x0awatch-only\x03\x01\x01i\x0d\
-\x01@\x01\x04init\x08\0\x0e\x04\0\x17[constructor]watch-only\x01\x0f\x01h\x0d\x01\
-j\x01s\x01\x03\x01@\x01\x04self\x10\0\x11\x04\0\x1e[method]watch-only.new-addres\
-s\x01\x12\x01j\x01\x06\x01\x03\x01@\x04\x04self\x10\x09recepient\x06\x06amountw\x08\
-fee-ratew\0\x13\x04\0%[method]watch-only.create-transaction\x01\x14\x01p\x0a\x01\
-j\x01\x15\x01\x03\x01@\x01\x04self\x10\0\x16\x04\0\x1c[method]watch-only.get-utx\
-os\x01\x17\x01j\0\x01\x03\x01@\x02\x04self\x10\x05utxos\x15\0\x18\x04\0\x1f[meth\
-od]watch-only.insert-utxos\x01\x19\x01p\x0c\x01j\x01\x1a\x01\x03\x01@\x01\x04sel\
-f\x10\0\x1b\x04\0\x1e[method]watch-only.get-pubkeys\x01\x1c\x01j\x01w\x01\x03\x01\
-@\x01\x04self\x10\0\x1d\x04\0\x1a[method]watch-only.balance\x01\x1e\x04\0&[metho\
-d]watch-only.get-receive-address\x01\x12\x04\x01\x1ccomponent:wallet/types@0.1.0\
-\x05\0\x04\x01\x1dcomponent:wallet/wallet@0.1.0\x04\0\x0b\x0c\x01\0\x06wallet\x03\
-\0\0\0G\x09producers\x01\x0cprocessed-by\x02\x0dwit-component\x070.208.1\x10wit-\
-bindgen-rust\x060.25.0";
+\x02\x01r\x04\x04xpubs\x12account-derivations\x12master-fingerprints\x07network\x01\
+\x04\0\x06config\x03\0\x04\x01p}\x01q\x02\x09old-state\x01\x06\0\x06config\x01\x05\
+\0\x04\0\x0einitialization\x03\0\x07\x01r\x05\x04txid\x06\x04vouty\x06amountw\x06\
+script\x06\x08is-spent\x7f\x04\0\x0cpartial-utxo\x03\0\x09\x01p}\x04\0\x06pubkey\
+\x03\0\x0b\x04\0\x0awatch-only\x03\x01\x01i\x0d\x01@\x01\x04init\x08\0\x0e\x04\0\
+\x17[constructor]watch-only\x01\x0f\x01h\x0d\x01j\x01s\x01\x03\x01@\x01\x04self\x10\
+\0\x11\x04\0\x1e[method]watch-only.new-address\x01\x12\x01j\x01\x06\x01\x03\x01@\
+\x04\x04self\x10\x09recepient\x06\x06amountw\x08fee-ratew\0\x13\x04\0%[method]wa\
+tch-only.create-transaction\x01\x14\x01p\x0a\x01j\x01\x15\x01\x03\x01@\x01\x04se\
+lf\x10\0\x16\x04\0\x1c[method]watch-only.get-utxos\x01\x17\x01j\0\x01\x03\x01@\x02\
+\x04self\x10\x05utxos\x15\0\x18\x04\0\x1f[method]watch-only.insert-utxos\x01\x19\
+\x01p\x0c\x01j\x01\x1a\x01\x03\x01@\x01\x04self\x10\0\x1b\x04\0\x1e[method]watch\
+-only.get-pubkeys\x01\x1c\x01j\x01w\x01\x03\x01@\x01\x04self\x10\0\x1d\x04\0\x1a\
+[method]watch-only.balance\x01\x1e\x04\0&[method]watch-only.get-receive-address\x01\
+\x12\x04\x01\x1ccomponent:wallet/types@0.1.0\x05\0\x04\x01\x1dcomponent:wallet/w\
+allet@0.1.0\x04\0\x0b\x0c\x01\0\x06wallet\x03\0\0\0G\x09producers\x01\x0cprocess\
+ed-by\x02\x0dwit-component\x070.208.1\x10wit-bindgen-rust\x060.25.0";
 
 #[inline(never)]
 #[doc(hidden)]

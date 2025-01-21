@@ -408,12 +408,16 @@ pub mod component {
             #[derive(Clone)]
             pub struct Config {
                 pub xpub: _rt::String,
+                pub account_derivation: _rt::String,
+                pub master_fingerprint: _rt::String,
                 pub network: BitcoinNetwork,
             }
             impl ::core::fmt::Debug for Config {
                 fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
                     f.debug_struct("Config")
                         .field("xpub", &self.xpub)
+                        .field("account-derivation", &self.account_derivation)
+                        .field("master-fingerprint", &self.master_fingerprint)
                         .field("network", &self.network)
                         .finish()
                 }
@@ -504,24 +508,59 @@ pub mod component {
                 #[allow(unused_unsafe, clippy::all)]
                 pub fn new(init: &Initialization) -> Self {
                     unsafe {
-                        let (result3_0, result3_1, result3_2, result3_3) = match init {
+                        let (
+                            result5_0,
+                            result5_1,
+                            result5_2,
+                            result5_3,
+                            result5_4,
+                            result5_5,
+                            result5_6,
+                            result5_7,
+                        ) = match init {
                             Initialization::OldState(e) => {
                                 let vec0 = e;
                                 let ptr0 = vec0.as_ptr().cast::<u8>();
                                 let len0 = vec0.len();
 
-                                (0i32, ptr0.cast_mut(), len0, 0i32)
+                                (
+                                    0i32,
+                                    ptr0.cast_mut(),
+                                    len0,
+                                    ::core::ptr::null_mut(),
+                                    0usize,
+                                    ::core::ptr::null_mut(),
+                                    0usize,
+                                    0i32,
+                                )
                             }
                             Initialization::Config(e) => {
                                 let Config {
                                     xpub: xpub1,
+                                    account_derivation: account_derivation1,
+                                    master_fingerprint: master_fingerprint1,
                                     network: network1,
                                 } = e;
                                 let vec2 = xpub1;
                                 let ptr2 = vec2.as_ptr().cast::<u8>();
                                 let len2 = vec2.len();
+                                let vec3 = account_derivation1;
+                                let ptr3 = vec3.as_ptr().cast::<u8>();
+                                let len3 = vec3.len();
+                                let vec4 = master_fingerprint1;
+                                let ptr4 = vec4.as_ptr().cast::<u8>();
+                                let len4 = vec4.len();
 
-                                (1i32, ptr2.cast_mut(), len2, network1.clone() as i32)
+                                (
+                                    1i32,
+                                    ptr2.cast_mut(),
+                                    len2,
+                                    ptr3.cast_mut(),
+                                    len3,
+                                    ptr4.cast_mut(),
+                                    len4,
+                                    network1.clone() as i32,
+                                )
                             }
                         };
 
@@ -529,14 +568,35 @@ pub mod component {
                         #[link(wasm_import_module = "component:wallet/types@0.1.0")]
                         extern "C" {
                             #[link_name = "[constructor]watch-only"]
-                            fn wit_import(_: i32, _: *mut u8, _: usize, _: i32) -> i32;
+                            fn wit_import(
+                                _: i32,
+                                _: *mut u8,
+                                _: usize,
+                                _: *mut u8,
+                                _: usize,
+                                _: *mut u8,
+                                _: usize,
+                                _: i32,
+                            ) -> i32;
                         }
 
                         #[cfg(not(target_arch = "wasm32"))]
-                        fn wit_import(_: i32, _: *mut u8, _: usize, _: i32) -> i32 {
+                        fn wit_import(
+                            _: i32,
+                            _: *mut u8,
+                            _: usize,
+                            _: *mut u8,
+                            _: usize,
+                            _: *mut u8,
+                            _: usize,
+                            _: i32,
+                        ) -> i32 {
                             unreachable!()
                         }
-                        let ret = wit_import(result3_0, result3_1, result3_2, result3_3);
+                        let ret = wit_import(
+                            result5_0, result5_1, result5_2, result5_3, result5_4, result5_5,
+                            result5_6, result5_7,
+                        );
                         WatchOnly::from_handle(ret as u32)
                     }
                 }
@@ -1762,8 +1822,8 @@ pub(crate) use __export_nodeworld_impl as export;
 #[cfg(target_arch = "wasm32")]
 #[link_section = "component-type:wit-bindgen:0.25.0:nodeworld:encoded world"]
 #[doc(hidden)]
-pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 2067] = *b"\
-\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\x93\x0f\x01A\x02\x01\
+pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 2107] = *b"\
+\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xbb\x0f\x01A\x02\x01\
 A\x06\x01B\x10\x01q\x06\x0fopen-file-error\0\0\x0cstream-error\0\0\x0efile-not-f\
 ound\x01w\0\x0cinvalid-data\0\0\x0bparse-error\0\0\x0fentry-not-found\0\0\x04\0\x05\
 error\x03\0\0\x04\0\x07kvstore\x03\x01\x01i\x02\x01@\0\0\x03\x04\0\x14[construct\
@@ -1774,38 +1834,38 @@ self\x05\x03keys\0\x07\x04\0\x16[method]kvstore.delete\x01\x0b\x03\x01\x18compon
 ent:kv/types@0.1.0\x05\0\x01B'\x01m\x05\x07bitcoin\x07testnet\x08testnet4\x06sig\
 net\x07regtest\x04\0\x0fbitcoin-network\x03\0\0\x01q\x05\x0ecoin-selection\0\0\x04\
 psbt\0\0\x18missing-non-witness-utxo\0\0\x09no-pubkey\0\0\x0cpubkey-error\0\0\x04\
-\0\x05error\x03\0\x02\x01r\x02\x04xpubs\x07network\x01\x04\0\x06config\x03\0\x04\
-\x01p}\x01q\x02\x09old-state\x01\x06\0\x06config\x01\x05\0\x04\0\x0einitializati\
-on\x03\0\x07\x01r\x05\x04txid\x06\x04vouty\x06amountw\x06script\x06\x08is-spent\x7f\
-\x04\0\x0cpartial-utxo\x03\0\x09\x01p}\x04\0\x06pubkey\x03\0\x0b\x04\0\x0awatch-\
-only\x03\x01\x01i\x0d\x01@\x01\x04init\x08\0\x0e\x04\0\x17[constructor]watch-onl\
-y\x01\x0f\x01h\x0d\x01j\x01s\x01\x03\x01@\x01\x04self\x10\0\x11\x04\0\x1e[method\
-]watch-only.new-address\x01\x12\x01j\x01\x06\x01\x03\x01@\x04\x04self\x10\x09rec\
-epient\x06\x06amountw\x08fee-ratew\0\x13\x04\0%[method]watch-only.create-transac\
-tion\x01\x14\x01p\x0a\x01j\x01\x15\x01\x03\x01@\x01\x04self\x10\0\x16\x04\0\x1c[\
-method]watch-only.get-utxos\x01\x17\x01j\0\x01\x03\x01@\x02\x04self\x10\x05utxos\
-\x15\0\x18\x04\0\x1f[method]watch-only.insert-utxos\x01\x19\x01p\x0c\x01j\x01\x1a\
-\x01\x03\x01@\x01\x04self\x10\0\x1b\x04\0\x1e[method]watch-only.get-pubkeys\x01\x1c\
-\x01j\x01w\x01\x03\x01@\x01\x04self\x10\0\x1d\x04\0\x1a[method]watch-only.balanc\
-e\x01\x1e\x04\0&[method]watch-only.get-receive-address\x01\x12\x03\x01\x1ccompon\
-ent:wallet/types@0.1.0\x05\x01\x01B\x1b\x01r\x02\x03keys\x05values\x04\0\x0ekey-\
-value-pair\x03\0\0\x01q\x0a\x0dkey-not-found\0\0\x12key-already-exists\0\0\x10un\
-expected-error\0\0\x12key-overflow-error\0\0\x14value-overflow-error\0\0\x14try-\
-from-slice-error\0\0\x0autf8-error\0\0\x10filesystem-error\x01}\0\x13invalid-mag\
-ic-bytes\0\0\x0cstream-error\0\0\x04\0\x0bstore-error\x03\0\x02\x01o\x04}}}}\x01\
-r\x02\x07address\x04\x04port{\x04\0\x12ipv4-socket-adress\x03\0\x05\x01m\x05\x07\
-bitcoin\x07testnet\x08testnet4\x06signet\x07regtest\x04\0\x0fbitcoin-network\x03\
-\0\x07\x01ks\x01r\x04\x03fee\x09\x19estimated-settlement-timew\x02ids\x04rates\x04\
-\0\x10offering-bargain\x03\0\x0a\x01r\x04\x11genesis-blockhashs\x07network\x08\x0e\
-socket-address\x06\x04xpubs\x04\0\x0bnode-config\x03\0\x0c\x01q\x02\x09old-state\
-\0\0\x06config\x01\x0d\0\x04\0\x0einitialization\x03\0\x0e\x04\0\x0bclient-node\x03\
-\x01\x01i\x10\x01@\x01\x04init\x0f\0\x11\x04\0\x18[constructor]client-node\x01\x12\
-\x01h\x10\x01j\x01w\x01y\x01@\x01\x04self\x13\0\x14\x04\0\x1f[method]client-node\
-.get-balance\x01\x15\x01j\x01s\x01y\x01@\x01\x04self\x13\0\x16\x04\0'[method]cli\
-ent-node.get-receive-address\x01\x17\x04\x01\x1acomponent:node/types@0.1.0\x05\x02\
-\x04\x01\x1ecomponent:node/nodeworld@0.1.0\x04\0\x0b\x0f\x01\0\x09nodeworld\x03\0\
-\0\0G\x09producers\x01\x0cprocessed-by\x02\x0dwit-component\x070.208.1\x10wit-bi\
-ndgen-rust\x060.25.0";
+\0\x05error\x03\0\x02\x01r\x04\x04xpubs\x12account-derivations\x12master-fingerp\
+rints\x07network\x01\x04\0\x06config\x03\0\x04\x01p}\x01q\x02\x09old-state\x01\x06\
+\0\x06config\x01\x05\0\x04\0\x0einitialization\x03\0\x07\x01r\x05\x04txid\x06\x04\
+vouty\x06amountw\x06script\x06\x08is-spent\x7f\x04\0\x0cpartial-utxo\x03\0\x09\x01\
+p}\x04\0\x06pubkey\x03\0\x0b\x04\0\x0awatch-only\x03\x01\x01i\x0d\x01@\x01\x04in\
+it\x08\0\x0e\x04\0\x17[constructor]watch-only\x01\x0f\x01h\x0d\x01j\x01s\x01\x03\
+\x01@\x01\x04self\x10\0\x11\x04\0\x1e[method]watch-only.new-address\x01\x12\x01j\
+\x01\x06\x01\x03\x01@\x04\x04self\x10\x09recepient\x06\x06amountw\x08fee-ratew\0\
+\x13\x04\0%[method]watch-only.create-transaction\x01\x14\x01p\x0a\x01j\x01\x15\x01\
+\x03\x01@\x01\x04self\x10\0\x16\x04\0\x1c[method]watch-only.get-utxos\x01\x17\x01\
+j\0\x01\x03\x01@\x02\x04self\x10\x05utxos\x15\0\x18\x04\0\x1f[method]watch-only.\
+insert-utxos\x01\x19\x01p\x0c\x01j\x01\x1a\x01\x03\x01@\x01\x04self\x10\0\x1b\x04\
+\0\x1e[method]watch-only.get-pubkeys\x01\x1c\x01j\x01w\x01\x03\x01@\x01\x04self\x10\
+\0\x1d\x04\0\x1a[method]watch-only.balance\x01\x1e\x04\0&[method]watch-only.get-\
+receive-address\x01\x12\x03\x01\x1ccomponent:wallet/types@0.1.0\x05\x01\x01B\x1b\
+\x01r\x02\x03keys\x05values\x04\0\x0ekey-value-pair\x03\0\0\x01q\x0a\x0dkey-not-\
+found\0\0\x12key-already-exists\0\0\x10unexpected-error\0\0\x12key-overflow-erro\
+r\0\0\x14value-overflow-error\0\0\x14try-from-slice-error\0\0\x0autf8-error\0\0\x10\
+filesystem-error\x01}\0\x13invalid-magic-bytes\0\0\x0cstream-error\0\0\x04\0\x0b\
+store-error\x03\0\x02\x01o\x04}}}}\x01r\x02\x07address\x04\x04port{\x04\0\x12ipv\
+4-socket-adress\x03\0\x05\x01m\x05\x07bitcoin\x07testnet\x08testnet4\x06signet\x07\
+regtest\x04\0\x0fbitcoin-network\x03\0\x07\x01ks\x01r\x04\x03fee\x09\x19estimate\
+d-settlement-timew\x02ids\x04rates\x04\0\x10offering-bargain\x03\0\x0a\x01r\x04\x11\
+genesis-blockhashs\x07network\x08\x0esocket-address\x06\x04xpubs\x04\0\x0bnode-c\
+onfig\x03\0\x0c\x01q\x02\x09old-state\0\0\x06config\x01\x0d\0\x04\0\x0einitializ\
+ation\x03\0\x0e\x04\0\x0bclient-node\x03\x01\x01i\x10\x01@\x01\x04init\x0f\0\x11\
+\x04\0\x18[constructor]client-node\x01\x12\x01h\x10\x01j\x01w\x01y\x01@\x01\x04s\
+elf\x13\0\x14\x04\0\x1f[method]client-node.get-balance\x01\x15\x01j\x01s\x01y\x01\
+@\x01\x04self\x13\0\x16\x04\0'[method]client-node.get-receive-address\x01\x17\x04\
+\x01\x1acomponent:node/types@0.1.0\x05\x02\x04\x01\x1ecomponent:node/nodeworld@0\
+.1.0\x04\0\x0b\x0f\x01\0\x09nodeworld\x03\0\0\0G\x09producers\x01\x0cprocessed-b\
+y\x02\x0dwit-component\x070.208.1\x10wit-bindgen-rust\x060.25.0";
 
 #[inline(never)]
 #[doc(hidden)]
