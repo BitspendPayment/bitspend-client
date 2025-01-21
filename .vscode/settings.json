@@ -4,14 +4,14 @@
         "component",
         "check",
         "--workspace",
-        "--exclude=runner",
+        "--exclude=client-test",
         "--all-targets",
         "--message-format=json"
     ],
     "rust-analyzer.cargo.buildScripts.overrideCommand": [
         "cargo",
         "check",
-        "--package=runner",
+        "--package=client-test",
         "--all-targets",
         "--message-format=json"
     ],
