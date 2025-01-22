@@ -58,6 +58,8 @@ interface types {
 
         get-receive-address: func() -> result<string, error>;
 
+        finalise-transaction: func(psbt: list<u8>) -> result<list<u8>, error>;
+
    
     }
 }

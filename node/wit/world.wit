@@ -4,6 +4,7 @@ package component:node@0.1.0;
 world nodeworld {
     import component:kv/types@0.1.0;
     import component:wallet/types@0.1.0;
+    import component:signer/types@0.1.0;
     export types;
 }
 
@@ -58,7 +59,7 @@ interface types {
         genesis-blockhash: string,
         network: bitcoin-network,
         socket-address: ipv4-socket-adress,
-        xpub: string
+        xpriv: string
     }
 
 
@@ -70,7 +71,7 @@ interface types {
 
         get-receive-address: func() -> result<string, u32>;
 
-     
+        send-to-address: func(recepient: list<u8>, amount: u64, fee-rate: u64) -> result<_, u32>;
 
     }
 }

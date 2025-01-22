@@ -7,7 +7,7 @@ use rand::Rng;
 
 
 
-pub fn test_balance(bitspend_client: & mut BitspendClient) {
+pub fn test(bitspend_client: & mut BitspendClient) {
     let rpc_auth = Auth::UserPass("regtest".into(), "regtest".into());
     let bitcoin_rpc = Client::new("127.0.0.1:18743", rpc_auth).unwrap();
 
@@ -34,4 +34,13 @@ pub fn test_balance(bitspend_client: & mut BitspendClient) {
 
     let balance = bitspend_client.balance();
     assert_eq!(balance, total_amount);
+    
+
+    let sending = bitspend_client.send_to_address(mine_to_address.script_pubkey().to_bytes(), transfer_amount, 3);
+    bitcoin_rpc.generate_to_address(1, &mine_to_address).unwrap();
+    let balance = bitspend_client.balance();
+    assert_eq!(balance, total_amount - 100_000);
+
+
+    
 }

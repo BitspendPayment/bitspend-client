@@ -5,7 +5,7 @@ use std::{cell::RefCell, str::FromStr};
 
 use bindings::exports::component::wallet::{self, types::{Error, Guest, GuestWatchOnly, BitcoinNetwork as ConfigNetwork, PartialUtxo, WatchOnly}};
 
-use bitcoin::{bip32::{Fingerprint, IntoDerivationPath, Xpub}, hashes::Hash, Amount, FeeRate, Network, OutPoint, Txid};
+use bitcoin::{bip32::{Fingerprint, IntoDerivationPath, Xpub}, hashes::Hash, Amount, FeeRate, Network, OutPoint, Psbt, Txid};
 use rand_core::RngCore;
 use wasi::random::random::{get_random_u64, get_random_bytes};
 
@@ -145,6 +145,11 @@ impl GuestWatchOnly for WatchOnyWallet {
     
     fn get_receive_address(&self) -> Result<String, Error> {
         return self.inner.borrow_mut().get_receive_address().map_err(|err| err.into())
+    }
+    
+    fn finalise_transaction( &self, psbt: Vec<u8>) -> Result<Vec<u8>, Error> {
+        let psbt = Psbt::deserialize(&psbt).unwrap();
+        return self.inner.borrow_mut().finalise_psbt_tx(psbt).map_err(|err| err.into())
     }
 
 }

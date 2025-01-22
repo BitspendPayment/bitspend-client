@@ -835,6 +835,75 @@ pub mod exports {
                         _ => (),
                     }
                 }
+                #[doc(hidden)]
+                #[allow(non_snake_case)]
+                pub unsafe fn _export_method_watch_only_finalise_transaction_cabi<
+                    T: GuestWatchOnly,
+                >(
+                    arg0: *mut u8,
+                    arg1: *mut u8,
+                    arg2: usize,
+                ) -> *mut u8 {
+                    #[cfg(target_arch = "wasm32")]
+                    _rt::run_ctors_once();
+                    let len0 = arg2;
+                    let result1 = T::finalise_transaction(
+                        WatchOnlyBorrow::lift(arg0 as u32 as usize).get(),
+                        _rt::Vec::from_raw_parts(arg1.cast(), len0, len0),
+                    );
+                    let ptr2 = _RET_AREA.0.as_mut_ptr().cast::<u8>();
+                    match result1 {
+                        Ok(e) => {
+                            *ptr2.add(0).cast::<u8>() = (0i32) as u8;
+                            let vec3 = (e).into_boxed_slice();
+                            let ptr3 = vec3.as_ptr().cast::<u8>();
+                            let len3 = vec3.len();
+                            ::core::mem::forget(vec3);
+                            *ptr2.add(8).cast::<usize>() = len3;
+                            *ptr2.add(4).cast::<*mut u8>() = ptr3.cast_mut();
+                        }
+                        Err(e) => {
+                            *ptr2.add(0).cast::<u8>() = (1i32) as u8;
+                            match e {
+                                Error::CoinSelection => {
+                                    *ptr2.add(4).cast::<u8>() = (0i32) as u8;
+                                }
+                                Error::Psbt => {
+                                    *ptr2.add(4).cast::<u8>() = (1i32) as u8;
+                                }
+                                Error::MissingNonWitnessUtxo => {
+                                    *ptr2.add(4).cast::<u8>() = (2i32) as u8;
+                                }
+                                Error::NoPubkey => {
+                                    *ptr2.add(4).cast::<u8>() = (3i32) as u8;
+                                }
+                                Error::PubkeyError => {
+                                    *ptr2.add(4).cast::<u8>() = (4i32) as u8;
+                                }
+                            }
+                        }
+                    };
+                    ptr2
+                }
+                #[doc(hidden)]
+                #[allow(non_snake_case)]
+                pub unsafe fn __post_return_method_watch_only_finalise_transaction<
+                    T: GuestWatchOnly,
+                >(
+                    arg0: *mut u8,
+                ) {
+                    let l0 = i32::from(*arg0.add(0).cast::<u8>());
+                    match l0 {
+                        0 => {
+                            let l1 = *arg0.add(4).cast::<*mut u8>();
+                            let l2 = *arg0.add(8).cast::<usize>();
+                            let base3 = l1;
+                            let len3 = l2;
+                            _rt::cabi_dealloc(base3, len3 * 1, 1);
+                        }
+                        _ => (),
+                    }
+                }
                 pub trait Guest {
                     type WatchOnly: GuestWatchOnly;
                 }
@@ -896,6 +965,10 @@ pub mod exports {
                     fn get_pubkeys(&self) -> Result<_rt::Vec<Pubkey>, Error>;
                     fn balance(&self) -> Result<u64, Error>;
                     fn get_receive_address(&self) -> Result<_rt::String, Error>;
+                    fn finalise_transaction(
+                        &self,
+                        psbt: _rt::Vec<u8>,
+                    ) -> Result<_rt::Vec<u8>, Error>;
                 }
                 #[doc(hidden)]
 
@@ -953,6 +1026,14 @@ pub mod exports {
     #[export_name = "cabi_post_component:wallet/types@0.1.0#[method]watch-only.get-receive-address"]
     unsafe extern "C" fn _post_return_method_watch_only_get_receive_address(arg0: *mut u8,) {
       $($path_to_types)*::__post_return_method_watch_only_get_receive_address::<<$ty as $($path_to_types)*::Guest>::WatchOnly>(arg0)
+    }
+    #[export_name = "component:wallet/types@0.1.0#[method]watch-only.finalise-transaction"]
+    unsafe extern "C" fn export_method_watch_only_finalise_transaction(arg0: *mut u8,arg1: *mut u8,arg2: usize,) -> *mut u8 {
+      $($path_to_types)*::_export_method_watch_only_finalise_transaction_cabi::<<$ty as $($path_to_types)*::Guest>::WatchOnly>(arg0, arg1, arg2)
+    }
+    #[export_name = "cabi_post_component:wallet/types@0.1.0#[method]watch-only.finalise-transaction"]
+    unsafe extern "C" fn _post_return_method_watch_only_finalise_transaction(arg0: *mut u8,) {
+      $($path_to_types)*::__post_return_method_watch_only_finalise_transaction::<<$ty as $($path_to_types)*::Guest>::WatchOnly>(arg0)
     }
 
     const _: () = {
@@ -1239,9 +1320,9 @@ pub(crate) use __export_wallet_impl as export;
 #[cfg(target_arch = "wasm32")]
 #[link_section = "component-type:wit-bindgen:0.25.0:wallet:encoded world"]
 #[doc(hidden)]
-pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 1008] = *b"\
-\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xf3\x06\x01A\x02\x01\
-A\x02\x01B'\x01m\x05\x07bitcoin\x07testnet\x08testnet4\x06signet\x07regtest\x04\0\
+pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 1069] = *b"\
+\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xb0\x07\x01A\x02\x01\
+A\x02\x01B)\x01m\x05\x07bitcoin\x07testnet\x08testnet4\x06signet\x07regtest\x04\0\
 \x0fbitcoin-network\x03\0\0\x01q\x05\x0ecoin-selection\0\0\x04psbt\0\0\x18missin\
 g-non-witness-utxo\0\0\x09no-pubkey\0\0\x0cpubkey-error\0\0\x04\0\x05error\x03\0\
 \x02\x01r\x04\x04xpubs\x12account-derivations\x12master-fingerprints\x07network\x01\
@@ -1258,9 +1339,10 @@ lf\x10\0\x16\x04\0\x1c[method]watch-only.get-utxos\x01\x17\x01j\0\x01\x03\x01@\x
 \x01p\x0c\x01j\x01\x1a\x01\x03\x01@\x01\x04self\x10\0\x1b\x04\0\x1e[method]watch\
 -only.get-pubkeys\x01\x1c\x01j\x01w\x01\x03\x01@\x01\x04self\x10\0\x1d\x04\0\x1a\
 [method]watch-only.balance\x01\x1e\x04\0&[method]watch-only.get-receive-address\x01\
-\x12\x04\x01\x1ccomponent:wallet/types@0.1.0\x05\0\x04\x01\x1dcomponent:wallet/w\
-allet@0.1.0\x04\0\x0b\x0c\x01\0\x06wallet\x03\0\0\0G\x09producers\x01\x0cprocess\
-ed-by\x02\x0dwit-component\x070.208.1\x10wit-bindgen-rust\x060.25.0";
+\x12\x01@\x02\x04self\x10\x04psbt\x06\0\x13\x04\0'[method]watch-only.finalise-tr\
+ansaction\x01\x1f\x04\x01\x1ccomponent:wallet/types@0.1.0\x05\0\x04\x01\x1dcompo\
+nent:wallet/wallet@0.1.0\x04\0\x0b\x0c\x01\0\x06wallet\x03\0\0\0G\x09producers\x01\
+\x0cprocessed-by\x02\x0dwit-component\x070.208.1\x10wit-bindgen-rust\x060.25.0";
 
 #[inline(never)]
 #[doc(hidden)]

@@ -58,4 +58,4 @@ run_test:
 .PHONY: clean
 clean:
 	@echo "Stopping containers and cleaning up..."
-	@docker compose -f $(DOCKER_COMPOSE_FILE) down
+#	@docker compose -f $(DOCKER_COMPOSE_FILE) down
