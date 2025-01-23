@@ -1,5 +1,6 @@
 use crate::messages::{COINBASE_OUTPOINT_HASH, COINBASE_OUTPOINT_INDEX};
 use crate::util::{sha256d, var_int, Hash256, Result, Serializable};
+use bitcoin::witness;
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use std::fmt;
 use std::io;
@@ -177,6 +178,7 @@ impl Serializable<Tx> for Tx {
                         witnesses.push(TxWitness::read(reader)?);
                     }
                     let lock_time = reader.read_u32::<LittleEndian>()?;
+                    println!("These are witnesses {:?}", witnesses);
                     return Ok(Tx {
                         version,
                         inputs,
@@ -215,6 +217,29 @@ impl Serializable<Tx> for Tx {
 
     fn write(&self, writer: &mut dyn Write) -> io::Result<()> {
         writer.write_u32::<LittleEndian>(self.version)?;
+
+        if let Some(witnesses) = self.witnesses.clone() {
+            writer.write_u8(0)?;
+            writer.write_u8(1)?;
+
+            var_int::write(self.inputs.len() as u64, writer)?;
+            for tx_in in self.inputs.iter() {
+                tx_in.write(writer)?;
+            }
+            var_int::write(self.outputs.len() as u64, writer)?;
+            for tx_out in self.outputs.iter() {
+                tx_out.write(writer)?;
+            }
+
+            for witness in witnesses {
+                witness.write(writer).unwrap();
+            }
+
+            writer.write_u32::<LittleEndian>(self.lock_time)?;
+
+            return Ok(())
+        }
+
         var_int::write(self.inputs.len() as u64, writer)?;
         for tx_in in self.inputs.iter() {
             tx_in.write(writer)?;
@@ -231,6 +256,15 @@ impl Serializable<Tx> for Tx {
 impl Payload<Tx> for Tx {
     fn size(&self) -> usize {
         let mut size = 8;
+
+        if let Some(witnesses) = self.witnesses.clone() {
+            size += 2;
+
+            for witness in witnesses {
+                size += witness.size();
+            }
+        }
+
         size += var_int::size(self.inputs.len() as u64);
         for tx_in in self.inputs.iter() {
             size += tx_in.size();

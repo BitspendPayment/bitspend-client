@@ -3,6 +3,8 @@ use byteorder::{ReadBytesExt, WriteBytesExt};
 use std::{io};
 use std::io::{Read, Write};
 
+use super::Payload;
+
 /// Transaction input
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
 pub struct TxWitness {
@@ -12,6 +14,17 @@ pub struct TxWitness {
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
 pub struct TxWitnessData {
     pub witness_data: Vec<u8>
+}
+
+impl Payload<TxWitnessData> for TxWitnessData {
+    fn size(&self) -> usize {
+        let mut size = var_int::size(self.witness_data.len() as u64);
+
+        size += self.witness_data.len();
+
+        size
+
+    }
 }
 
 
@@ -28,11 +41,22 @@ impl Serializable<TxWitnessData> for TxWitnessData {
     }
 
     fn write(&self, writer: &mut dyn Write) -> io::Result<()> {
-        var_int::write(self.witness_data.len() as u64, writer)?;
-        for byte in self.witness_data.iter() {
-            writer.write_u8(*byte)?;
+        var_int::write(self.witness_data.len() as u64, writer).unwrap();
+        for byte in self.witness_data.clone().into_iter() {
+            writer.write_u8(byte).unwrap();
         };
         Ok(())
+    }
+}
+
+impl Payload<TxWitness> for TxWitness {
+    fn size(&self) -> usize {
+        let mut size = var_int::size(self.witness.len() as u64);
+
+        for witnessdata in &self.witness {
+            size +=  witnessdata.size();
+        }
+        size
     }
 }
 
@@ -50,9 +74,9 @@ impl Serializable<TxWitness> for TxWitness {
     }
 
     fn write(&self, writer: &mut dyn Write) -> io::Result<()> {
-        var_int::write(self.witness.len() as u64, writer)?;
+        var_int::write(self.witness.len() as u64, writer).unwrap();
         for witness_data in self.witness.iter() {
-            witness_data.write(writer)?;
+            witness_data.write(writer).unwrap();
         };
         Ok(())
     }

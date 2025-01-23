@@ -1,5 +1,5 @@
 use std::{iter::zip, sync::Arc};
-use crate::{bindings::component::wallet::types::{PartialUtxo, WatchOnly}, messages::{block_locator::NO_HASH_STOP, compact_filter::CompactFilter, tx_out::TxOut, Inv, InvVect}, util::{self, sha256d, Error}};
+use crate::{bindings::component::wallet::types::{PartialUtxo, WatchOnly}, messages::{block_locator::NO_HASH_STOP, compact_filter::CompactFilter, tx::Tx, tx_out::TxOut, Inv, InvVect}, util::{self, sha256d, Error}};
 
 use bitcoin::network as bitcoin_network;
 use serde::Serialize;
@@ -69,8 +69,7 @@ impl CompactChain {
 
     fn fetch_and_save_utxos(&mut self, filters: Vec<CompactFilter>) -> Result<(), Error> {
         let pub_keys = &self.wallet.get_pubkeys().map_err(|_| Error::WalletError(1))?;
-        println!("pub key is here {:?}", pub_keys.clone());
-        println!("thsi is filters {:?}", filters.clone());
+
         let blockhash_present: Vec<_> = filters.into_iter().filter_map(|filter| {
             let filter_algo = util::block_filter::BlockFilter::new(&filter.filter_bytes);
             
@@ -116,7 +115,7 @@ impl CompactChain {
                 }
              }
         }
-        println!("this are the utxos {:?}", utxos.clone());
+
         self.wallet.insert_utxos(&utxos).unwrap();
         Ok(())
 
@@ -178,6 +177,12 @@ impl CompactChain {
         
         Ok(())
         
+    }
+
+    pub fn send_transaction(& mut self, transaction: Tx) -> Result<(),Error> {
+        self.p2p.keep_alive().map_err(|_| Error::NetworkError)?;
+        self.p2p.send_transaction(transaction)?;
+        Ok(())
     }
 
 

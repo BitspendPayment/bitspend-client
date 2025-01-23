@@ -1,5 +1,5 @@
 [workspace]
 resolver = "2"
 members = [
-  "node", "client-test", "crates/kv", "crates/wallet"]
+  "node", "client-test", "crates/kv", "crates/wallet", "crates/signer"]
 

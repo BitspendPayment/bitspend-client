@@ -5,7 +5,7 @@ use std::{cell::RefCell, str::FromStr};
 
 use bindings::exports::component::wallet::{self, types::{Error, Guest, GuestWatchOnly, BitcoinNetwork as ConfigNetwork, PartialUtxo, WatchOnly}};
 
-use bitcoin::{bip32::Xpub, hashes::Hash, Amount, FeeRate, Network, OutPoint, Txid};
+use bitcoin::{bip32::{Fingerprint, IntoDerivationPath, Xpub}, hashes::Hash, Amount, FeeRate, Network, OutPoint, Psbt, Txid};
 use rand_core::RngCore;
 use wasi::random::random::{get_random_u64, get_random_bytes};
 
@@ -98,7 +98,9 @@ impl GuestWatchOnly for WatchOnyWallet {
             },
             wallet::types::Initialization::Config(config) => {
                 let xpub = Xpub::from_str(&config.xpub).unwrap();
-                let wallet =  watch_wallet::WatchOnly::new(xpub, config.network.into());
+                let account_derivation = config.account_derivation.into_derivation_path().unwrap();
+                let master_fingerprint = Fingerprint::from_str(&config.master_fingerprint).unwrap();
+                let wallet =  watch_wallet::WatchOnly::new(xpub, config.network.into(), account_derivation, master_fingerprint );
                 Self{ inner:  RefCell::new(wallet)}
             },
         }
@@ -143,6 +145,11 @@ impl GuestWatchOnly for WatchOnyWallet {
     
     fn get_receive_address(&self) -> Result<String, Error> {
         return self.inner.borrow_mut().get_receive_address().map_err(|err| err.into())
+    }
+    
+    fn finalise_transaction( &self, psbt: Vec<u8>) -> Result<Vec<u8>, Error> {
+        let psbt = Psbt::deserialize(&psbt).unwrap();
+        return self.inner.borrow_mut().finalise_psbt_tx(psbt).map_err(|err| err.into())
     }
 
 }

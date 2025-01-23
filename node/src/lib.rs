@@ -40,7 +40,7 @@ impl From<WasiBitcoinNetwork> for bitcoin_network::Network {
 
 impl From<WasiNodeConfig> for NodeConfig {
     fn from(val: WasiNodeConfig) -> Self {
-        let WasiNodeConfig { network, socket_address, genesis_blockhash, xpub } = val;
+        let WasiNodeConfig { network, socket_address, genesis_blockhash, xpriv    } = val;
 
         // Convert the network type
         let network: bitcoin_network::Network = network.into();
@@ -53,7 +53,7 @@ impl From<WasiNodeConfig> for NodeConfig {
             network,
             socket_address: CustomIPV4SocketAddress{ ip: socket_address.address, port: socket_address.port  },
             genesis_blockhash,
-            xpub
+            xpriv
         }
     }
 }
@@ -82,6 +82,17 @@ impl GuestClientNode for BitcoinNode {
     fn get_receive_address(&self) -> Result<String, u32> {
         return  self.inner.borrow_mut().get_receive_address().map_err(|err| err.to_error_code());
     }
+    
+    fn send_to_address(
+        &self,
+        recepient: Vec<u8>,
+        amount: u64,
+        fee_rate: u64,
+    ) -> Result<(), u32> {
+        return self.inner.borrow_mut().send_to_address(&recepient, amount, fee_rate).map_err(|err| err.to_error_code());
+    }
+
+
 }
 
 impl Guest for Component {
