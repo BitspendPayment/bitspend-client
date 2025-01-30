@@ -738,6 +738,34 @@ pub mod exports {
                 }
                 #[doc(hidden)]
                 #[allow(non_snake_case)]
+                pub unsafe fn _export_method_watch_only_get_state_cabi<T: GuestWatchOnly>(
+                    arg0: *mut u8,
+                ) -> *mut u8 {
+                    #[cfg(target_arch = "wasm32")]
+                    _rt::run_ctors_once();
+                    let result0 = T::get_state(WatchOnlyBorrow::lift(arg0 as u32 as usize).get());
+                    let ptr1 = _RET_AREA.0.as_mut_ptr().cast::<u8>();
+                    let vec2 = (result0).into_boxed_slice();
+                    let ptr2 = vec2.as_ptr().cast::<u8>();
+                    let len2 = vec2.len();
+                    ::core::mem::forget(vec2);
+                    *ptr1.add(4).cast::<usize>() = len2;
+                    *ptr1.add(0).cast::<*mut u8>() = ptr2.cast_mut();
+                    ptr1
+                }
+                #[doc(hidden)]
+                #[allow(non_snake_case)]
+                pub unsafe fn __post_return_method_watch_only_get_state<T: GuestWatchOnly>(
+                    arg0: *mut u8,
+                ) {
+                    let l0 = *arg0.add(0).cast::<*mut u8>();
+                    let l1 = *arg0.add(4).cast::<usize>();
+                    let base2 = l0;
+                    let len2 = l1;
+                    _rt::cabi_dealloc(base2, len2 * 1, 1);
+                }
+                #[doc(hidden)]
+                #[allow(non_snake_case)]
                 pub unsafe fn _export_method_watch_only_balance_cabi<T: GuestWatchOnly>(
                     arg0: *mut u8,
                 ) -> *mut u8 {
@@ -963,6 +991,7 @@ pub mod exports {
                     fn get_utxos(&self) -> Result<_rt::Vec<PartialUtxo>, Error>;
                     fn insert_utxos(&self, utxos: _rt::Vec<PartialUtxo>) -> Result<(), Error>;
                     fn get_pubkeys(&self) -> Result<_rt::Vec<Pubkey>, Error>;
+                    fn get_state(&self) -> _rt::Vec<u8>;
                     fn balance(&self) -> Result<u64, Error>;
                     fn get_receive_address(&self) -> Result<_rt::String, Error>;
                     fn finalise_transaction(
@@ -1014,6 +1043,14 @@ pub mod exports {
     #[export_name = "cabi_post_component:wallet/types@0.1.0#[method]watch-only.get-pubkeys"]
     unsafe extern "C" fn _post_return_method_watch_only_get_pubkeys(arg0: *mut u8,) {
       $($path_to_types)*::__post_return_method_watch_only_get_pubkeys::<<$ty as $($path_to_types)*::Guest>::WatchOnly>(arg0)
+    }
+    #[export_name = "component:wallet/types@0.1.0#[method]watch-only.get-state"]
+    unsafe extern "C" fn export_method_watch_only_get_state(arg0: *mut u8,) -> *mut u8 {
+      $($path_to_types)*::_export_method_watch_only_get_state_cabi::<<$ty as $($path_to_types)*::Guest>::WatchOnly>(arg0)
+    }
+    #[export_name = "cabi_post_component:wallet/types@0.1.0#[method]watch-only.get-state"]
+    unsafe extern "C" fn _post_return_method_watch_only_get_state(arg0: *mut u8,) {
+      $($path_to_types)*::__post_return_method_watch_only_get_state::<<$ty as $($path_to_types)*::Guest>::WatchOnly>(arg0)
     }
     #[export_name = "component:wallet/types@0.1.0#[method]watch-only.balance"]
     unsafe extern "C" fn export_method_watch_only_balance(arg0: *mut u8,) -> *mut u8 {
@@ -1320,9 +1357,9 @@ pub(crate) use __export_wallet_impl as export;
 #[cfg(target_arch = "wasm32")]
 #[link_section = "component-type:wit-bindgen:0.25.0:wallet:encoded world"]
 #[doc(hidden)]
-pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 1069] = *b"\
-\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xb0\x07\x01A\x02\x01\
-A\x02\x01B)\x01m\x05\x07bitcoin\x07testnet\x08testnet4\x06signet\x07regtest\x04\0\
+pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 1113] = *b"\
+\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xdc\x07\x01A\x02\x01\
+A\x02\x01B+\x01m\x05\x07bitcoin\x07testnet\x08testnet4\x06signet\x07regtest\x04\0\
 \x0fbitcoin-network\x03\0\0\x01q\x05\x0ecoin-selection\0\0\x04psbt\0\0\x18missin\
 g-non-witness-utxo\0\0\x09no-pubkey\0\0\x0cpubkey-error\0\0\x04\0\x05error\x03\0\
 \x02\x01r\x04\x04xpubs\x12account-derivations\x12master-fingerprints\x07network\x01\
@@ -1337,12 +1374,13 @@ tch-only.create-transaction\x01\x14\x01p\x0a\x01j\x01\x15\x01\x03\x01@\x01\x04se
 lf\x10\0\x16\x04\0\x1c[method]watch-only.get-utxos\x01\x17\x01j\0\x01\x03\x01@\x02\
 \x04self\x10\x05utxos\x15\0\x18\x04\0\x1f[method]watch-only.insert-utxos\x01\x19\
 \x01p\x0c\x01j\x01\x1a\x01\x03\x01@\x01\x04self\x10\0\x1b\x04\0\x1e[method]watch\
--only.get-pubkeys\x01\x1c\x01j\x01w\x01\x03\x01@\x01\x04self\x10\0\x1d\x04\0\x1a\
-[method]watch-only.balance\x01\x1e\x04\0&[method]watch-only.get-receive-address\x01\
-\x12\x01@\x02\x04self\x10\x04psbt\x06\0\x13\x04\0'[method]watch-only.finalise-tr\
-ansaction\x01\x1f\x04\x01\x1ccomponent:wallet/types@0.1.0\x05\0\x04\x01\x1dcompo\
-nent:wallet/wallet@0.1.0\x04\0\x0b\x0c\x01\0\x06wallet\x03\0\0\0G\x09producers\x01\
-\x0cprocessed-by\x02\x0dwit-component\x070.208.1\x10wit-bindgen-rust\x060.25.0";
+-only.get-pubkeys\x01\x1c\x01@\x01\x04self\x10\0\x06\x04\0\x1c[method]watch-only\
+.get-state\x01\x1d\x01j\x01w\x01\x03\x01@\x01\x04self\x10\0\x1e\x04\0\x1a[method\
+]watch-only.balance\x01\x1f\x04\0&[method]watch-only.get-receive-address\x01\x12\
+\x01@\x02\x04self\x10\x04psbt\x06\0\x13\x04\0'[method]watch-only.finalise-transa\
+ction\x01\x20\x04\x01\x1ccomponent:wallet/types@0.1.0\x05\0\x04\x01\x1dcomponent\
+:wallet/wallet@0.1.0\x04\0\x0b\x0c\x01\0\x06wallet\x03\0\0\0G\x09producers\x01\x0c\
+processed-by\x02\x0dwit-component\x070.208.1\x10wit-bindgen-rust\x060.25.0";
 
 #[inline(never)]
 #[doc(hidden)]

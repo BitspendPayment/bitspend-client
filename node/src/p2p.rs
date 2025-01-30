@@ -110,7 +110,6 @@ impl Peer {
 
       pub fn fetch_compact_filter_headers(& mut self, start_height: u32, hash_stop: Hash256 ) ->  Result<CompactFilterHeader> {
         let compact_locator = FilterLocator { filter_type: 0, start_height, hash_stop};
-        println!("initiated compact filter header");
         self.send(Message::GetCFHeaders(compact_locator))?;
 
         if let Message::CFHeaders(cfheades) =  self.receive(commands::CFHEADERS)? {

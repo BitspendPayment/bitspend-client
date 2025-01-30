@@ -13,8 +13,8 @@ pub struct CompactChain {
 }
 
 
-#[derive(serde::Deserialize, Serialize)]
-struct ChainState {
+#[derive(serde::Deserialize, Serialize, Clone)]
+pub struct ChainState {
     last_block_hash: Hash256,
     last_block_height: u64,
 }
@@ -52,6 +52,10 @@ impl CompactChain {
         Self{ p2p, chain_state: chain_state, wallet }
     }
 
+    pub fn get_state(& self) -> ChainState {
+        return self.chain_state.clone()
+    }
+
 
     fn get_and_verify_compact_filters(& mut self, start_height: u32, last_block_hash: Hash256) -> Result<Vec<CompactFilter>, Error> {
         let filter_header = self.p2p.get_compact_filter_headers(start_height, last_block_hash).unwrap();
@@ -79,9 +83,8 @@ impl CompactChain {
                 false => None,
             }
         }).collect();
-        println!("reached here");
+
         if blockhash_present.is_empty() {
-            println!("its empty");
             return Ok(());
         }
 
@@ -110,7 +113,6 @@ impl CompactChain {
                    //TODO: Fix this use get
                    for (index,utxo) in  utxos.clone().iter().enumerate() {
                         if utxo.txid == input.prev_output.hash.0.to_vec() && utxo.vout == input.prev_output.index {
-                            println!("found a utxo");
                             let mut utxo = utxos[index].clone();
                             utxo.is_spent = true;
                             new_utxos.push(utxo);
@@ -144,7 +146,6 @@ impl CompactChain {
                 .expect("No block headers found")
                 .hash();
 
-            println!("debug 1");
             // Calculate the range for the for loop
             let start_block = self.chain_state.last_block_height + 1;
             let end_block = start_block + (fetched_block_headers.len() - 1) as u64;

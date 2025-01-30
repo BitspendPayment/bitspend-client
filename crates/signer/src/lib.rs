@@ -45,6 +45,10 @@ impl GuestSimpleSigner for SimpleSignerStruct {
         Ok(modified_psbt.serialize())
     }
     
+    fn get_state(&self) -> Vec<u8> {
+      return self.inner.borrow_mut().get_state();
+    }
+    
 }
 
 

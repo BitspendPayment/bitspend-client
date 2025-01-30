@@ -27,7 +27,7 @@ interface types {
 
         sign-psbt: func(psbt: list<u8>) -> result<list<u8>, error>;
 
-
+        get-state: func() -> list<u8>;
 
 
     }

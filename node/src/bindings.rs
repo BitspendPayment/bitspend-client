@@ -584,6 +584,33 @@ pub mod component {
                     }
                 }
             }
+            impl SimpleSigner {
+                #[allow(unused_unsafe, clippy::all)]
+                pub fn get_state(&self) -> _rt::Vec<u8> {
+                    unsafe {
+                        #[repr(align(4))]
+                        struct RetArea([::core::mem::MaybeUninit<u8>; 8]);
+                        let mut ret_area = RetArea([::core::mem::MaybeUninit::uninit(); 8]);
+                        let ptr0 = ret_area.0.as_mut_ptr().cast::<u8>();
+                        #[cfg(target_arch = "wasm32")]
+                        #[link(wasm_import_module = "component:signer/types@0.1.0")]
+                        extern "C" {
+                            #[link_name = "[method]simple-signer.get-state"]
+                            fn wit_import(_: i32, _: *mut u8);
+                        }
+
+                        #[cfg(not(target_arch = "wasm32"))]
+                        fn wit_import(_: i32, _: *mut u8) {
+                            unreachable!()
+                        }
+                        wit_import((self).handle() as i32, ptr0);
+                        let l1 = *ptr0.add(0).cast::<*mut u8>();
+                        let l2 = *ptr0.add(4).cast::<usize>();
+                        let len3 = l2;
+                        _rt::Vec::from_raw_parts(l1.cast(), len3, len3)
+                    }
+                }
+            }
         }
     }
     #[allow(dead_code)]
@@ -1245,6 +1272,33 @@ pub mod component {
                             }
                             _ => _rt::invalid_enum_discriminant(),
                         }
+                    }
+                }
+            }
+            impl WatchOnly {
+                #[allow(unused_unsafe, clippy::all)]
+                pub fn get_state(&self) -> _rt::Vec<u8> {
+                    unsafe {
+                        #[repr(align(4))]
+                        struct RetArea([::core::mem::MaybeUninit<u8>; 8]);
+                        let mut ret_area = RetArea([::core::mem::MaybeUninit::uninit(); 8]);
+                        let ptr0 = ret_area.0.as_mut_ptr().cast::<u8>();
+                        #[cfg(target_arch = "wasm32")]
+                        #[link(wasm_import_module = "component:wallet/types@0.1.0")]
+                        extern "C" {
+                            #[link_name = "[method]watch-only.get-state"]
+                            fn wit_import(_: i32, _: *mut u8);
+                        }
+
+                        #[cfg(not(target_arch = "wasm32"))]
+                        fn wit_import(_: i32, _: *mut u8) {
+                            unreachable!()
+                        }
+                        wit_import((self).handle() as i32, ptr0);
+                        let l1 = *ptr0.add(0).cast::<*mut u8>();
+                        let l2 = *ptr0.add(4).cast::<usize>();
+                        let len3 = l2;
+                        _rt::Vec::from_raw_parts(l1.cast(), len3, len3)
                     }
                 }
             }
@@ -2189,8 +2243,8 @@ pub(crate) use __export_nodeworld_impl as export;
 #[cfg(target_arch = "wasm32")]
 #[link_section = "component-type:wit-bindgen:0.25.0:nodeworld:encoded world"]
 #[doc(hidden)]
-pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 2673] = *b"\
-\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xf1\x13\x01A\x02\x01\
+pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 2764] = *b"\
+\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xcc\x14\x01A\x02\x01\
 A\x08\x01B\x10\x01q\x06\x0fopen-file-error\0\0\x0cstream-error\0\0\x0efile-not-f\
 ound\x01w\0\x0cinvalid-data\0\0\x0bparse-error\0\0\x0fentry-not-found\0\0\x04\0\x05\
 error\x03\0\0\x04\0\x07kvstore\x03\x01\x01i\x02\x01@\0\0\x03\x04\0\x14[construct\
@@ -2198,7 +2252,7 @@ or]kvstore\x01\x04\x01h\x02\x01p}\x01j\0\x01\x01\x01@\x03\x04self\x05\x03keys\x0
 value\x06\0\x07\x04\0\x16[method]kvstore.insert\x01\x08\x01j\x01\x06\x01\x01\x01\
 @\x02\x04self\x05\x03keys\0\x09\x04\0\x13[method]kvstore.get\x01\x0a\x01@\x02\x04\
 self\x05\x03keys\0\x07\x04\0\x16[method]kvstore.delete\x01\x0b\x03\x01\x18compon\
-ent:kv/types@0.1.0\x05\0\x01B)\x01m\x05\x07bitcoin\x07testnet\x08testnet4\x06sig\
+ent:kv/types@0.1.0\x05\0\x01B+\x01m\x05\x07bitcoin\x07testnet\x08testnet4\x06sig\
 net\x07regtest\x04\0\x0fbitcoin-network\x03\0\0\x01q\x05\x0ecoin-selection\0\0\x04\
 psbt\0\0\x18missing-non-witness-utxo\0\0\x09no-pubkey\0\0\x0cpubkey-error\0\0\x04\
 \0\x05error\x03\0\x02\x01r\x04\x04xpubs\x12account-derivations\x12master-fingerp\
@@ -2213,38 +2267,40 @@ it\x08\0\x0e\x04\0\x17[constructor]watch-only\x01\x0f\x01h\x0d\x01j\x01s\x01\x03
 \x03\x01@\x01\x04self\x10\0\x16\x04\0\x1c[method]watch-only.get-utxos\x01\x17\x01\
 j\0\x01\x03\x01@\x02\x04self\x10\x05utxos\x15\0\x18\x04\0\x1f[method]watch-only.\
 insert-utxos\x01\x19\x01p\x0c\x01j\x01\x1a\x01\x03\x01@\x01\x04self\x10\0\x1b\x04\
-\0\x1e[method]watch-only.get-pubkeys\x01\x1c\x01j\x01w\x01\x03\x01@\x01\x04self\x10\
-\0\x1d\x04\0\x1a[method]watch-only.balance\x01\x1e\x04\0&[method]watch-only.get-\
-receive-address\x01\x12\x01@\x02\x04self\x10\x04psbt\x06\0\x13\x04\0'[method]wat\
-ch-only.finalise-transaction\x01\x1f\x03\x01\x1ccomponent:wallet/types@0.1.0\x05\
-\x01\x01B\x19\x01r\x01\x04xpivs\x04\0\x06config\x03\0\0\x01p}\x01q\x02\x09old-st\
-ate\x01\x02\0\x06config\x01\x01\0\x04\0\x0einitialization\x03\0\x03\x01q\x02\x10\
-derivation-error\0\0\x0dsigning-error\0\0\x04\0\x05error\x03\0\x05\x01s\x04\0\x0c\
-account-xpub\x03\0\x07\x01s\x04\0\x12master-fingerprint\x03\0\x09\x01s\x04\0\x12\
-account-derivation\x03\0\x0b\x04\0\x0dsimple-signer\x03\x01\x01i\x0d\x01@\x01\x04\
-init\x04\0\x0e\x04\0\x1a[constructor]simple-signer\x01\x0f\x01h\x0d\x01o\x03\x08\
-\x0a\x0c\x01j\x01\x11\x01\x06\x01@\x01\x04self\x10\0\x12\x04\0$[method]simple-si\
-gner.derive-account\x01\x13\x01j\x01\x02\x01\x06\x01@\x02\x04self\x10\x04psbt\x02\
-\0\x14\x04\0\x1f[method]simple-signer.sign-psbt\x01\x15\x03\x01\x1ccomponent:sig\
-ner/types@0.1.0\x05\x02\x01B\x1f\x01r\x02\x03keys\x05values\x04\0\x0ekey-value-p\
-air\x03\0\0\x01q\x0a\x0dkey-not-found\0\0\x12key-already-exists\0\0\x10unexpecte\
-d-error\0\0\x12key-overflow-error\0\0\x14value-overflow-error\0\0\x14try-from-sl\
-ice-error\0\0\x0autf8-error\0\0\x10filesystem-error\x01}\0\x13invalid-magic-byte\
-s\0\0\x0cstream-error\0\0\x04\0\x0bstore-error\x03\0\x02\x01o\x04}}}}\x01r\x02\x07\
-address\x04\x04port{\x04\0\x12ipv4-socket-adress\x03\0\x05\x01m\x05\x07bitcoin\x07\
-testnet\x08testnet4\x06signet\x07regtest\x04\0\x0fbitcoin-network\x03\0\x07\x01k\
-s\x01r\x04\x03fee\x09\x19estimated-settlement-timew\x02ids\x04rates\x04\0\x10off\
-ering-bargain\x03\0\x0a\x01r\x04\x11genesis-blockhashs\x07network\x08\x0esocket-\
-address\x06\x05xprivs\x04\0\x0bnode-config\x03\0\x0c\x01q\x02\x09old-state\0\0\x06\
-config\x01\x0d\0\x04\0\x0einitialization\x03\0\x0e\x04\0\x0bclient-node\x03\x01\x01\
-i\x10\x01@\x01\x04init\x0f\0\x11\x04\0\x18[constructor]client-node\x01\x12\x01h\x10\
-\x01j\x01w\x01y\x01@\x01\x04self\x13\0\x14\x04\0\x1f[method]client-node.get-bala\
-nce\x01\x15\x01j\x01s\x01y\x01@\x01\x04self\x13\0\x16\x04\0'[method]client-node.\
-get-receive-address\x01\x17\x01p}\x01j\0\x01y\x01@\x04\x04self\x13\x09recepient\x18\
-\x06amountw\x08fee-ratew\0\x19\x04\0#[method]client-node.send-to-address\x01\x1a\
-\x04\x01\x1acomponent:node/types@0.1.0\x05\x03\x04\x01\x1ecomponent:node/nodewor\
-ld@0.1.0\x04\0\x0b\x0f\x01\0\x09nodeworld\x03\0\0\0G\x09producers\x01\x0cprocess\
-ed-by\x02\x0dwit-component\x070.208.1\x10wit-bindgen-rust\x060.25.0";
+\0\x1e[method]watch-only.get-pubkeys\x01\x1c\x01@\x01\x04self\x10\0\x06\x04\0\x1c\
+[method]watch-only.get-state\x01\x1d\x01j\x01w\x01\x03\x01@\x01\x04self\x10\0\x1e\
+\x04\0\x1a[method]watch-only.balance\x01\x1f\x04\0&[method]watch-only.get-receiv\
+e-address\x01\x12\x01@\x02\x04self\x10\x04psbt\x06\0\x13\x04\0'[method]watch-onl\
+y.finalise-transaction\x01\x20\x03\x01\x1ccomponent:wallet/types@0.1.0\x05\x01\x01\
+B\x1b\x01r\x01\x04xpivs\x04\0\x06config\x03\0\0\x01p}\x01q\x02\x09old-state\x01\x02\
+\0\x06config\x01\x01\0\x04\0\x0einitialization\x03\0\x03\x01q\x02\x10derivation-\
+error\0\0\x0dsigning-error\0\0\x04\0\x05error\x03\0\x05\x01s\x04\0\x0caccount-xp\
+ub\x03\0\x07\x01s\x04\0\x12master-fingerprint\x03\0\x09\x01s\x04\0\x12account-de\
+rivation\x03\0\x0b\x04\0\x0dsimple-signer\x03\x01\x01i\x0d\x01@\x01\x04init\x04\0\
+\x0e\x04\0\x1a[constructor]simple-signer\x01\x0f\x01h\x0d\x01o\x03\x08\x0a\x0c\x01\
+j\x01\x11\x01\x06\x01@\x01\x04self\x10\0\x12\x04\0$[method]simple-signer.derive-\
+account\x01\x13\x01j\x01\x02\x01\x06\x01@\x02\x04self\x10\x04psbt\x02\0\x14\x04\0\
+\x1f[method]simple-signer.sign-psbt\x01\x15\x01@\x01\x04self\x10\0\x02\x04\0\x1f\
+[method]simple-signer.get-state\x01\x16\x03\x01\x1ccomponent:signer/types@0.1.0\x05\
+\x02\x01B\x1f\x01r\x02\x03keys\x05values\x04\0\x0ekey-value-pair\x03\0\0\x01q\x0a\
+\x0dkey-not-found\0\0\x12key-already-exists\0\0\x10unexpected-error\0\0\x12key-o\
+verflow-error\0\0\x14value-overflow-error\0\0\x14try-from-slice-error\0\0\x0autf\
+8-error\0\0\x10filesystem-error\x01}\0\x13invalid-magic-bytes\0\0\x0cstream-erro\
+r\0\0\x04\0\x0bstore-error\x03\0\x02\x01o\x04}}}}\x01r\x02\x07address\x04\x04por\
+t{\x04\0\x12ipv4-socket-adress\x03\0\x05\x01m\x05\x07bitcoin\x07testnet\x08testn\
+et4\x06signet\x07regtest\x04\0\x0fbitcoin-network\x03\0\x07\x01ks\x01r\x04\x03fe\
+e\x09\x19estimated-settlement-timew\x02ids\x04rates\x04\0\x10offering-bargain\x03\
+\0\x0a\x01r\x04\x11genesis-blockhashs\x07network\x08\x0esocket-address\x06\x05xp\
+rivs\x04\0\x0bnode-config\x03\0\x0c\x01q\x02\x09old-state\0\0\x06config\x01\x0d\0\
+\x04\0\x0einitialization\x03\0\x0e\x04\0\x0bclient-node\x03\x01\x01i\x10\x01@\x01\
+\x04init\x0f\0\x11\x04\0\x18[constructor]client-node\x01\x12\x01h\x10\x01j\x01w\x01\
+y\x01@\x01\x04self\x13\0\x14\x04\0\x1f[method]client-node.get-balance\x01\x15\x01\
+j\x01s\x01y\x01@\x01\x04self\x13\0\x16\x04\0'[method]client-node.get-receive-add\
+ress\x01\x17\x01p}\x01j\0\x01y\x01@\x04\x04self\x13\x09recepient\x18\x06amountw\x08\
+fee-ratew\0\x19\x04\0#[method]client-node.send-to-address\x01\x1a\x04\x01\x1acom\
+ponent:node/types@0.1.0\x05\x03\x04\x01\x1ecomponent:node/nodeworld@0.1.0\x04\0\x0b\
+\x0f\x01\0\x09nodeworld\x03\0\0\0G\x09producers\x01\x0cprocessed-by\x02\x0dwit-c\
+omponent\x070.208.1\x10wit-bindgen-rust\x060.25.0";
 
 #[inline(never)]
 #[doc(hidden)]

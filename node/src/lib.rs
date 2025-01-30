@@ -92,6 +92,8 @@ impl GuestClientNode for BitcoinNode {
         return self.inner.borrow_mut().send_to_address(&recepient, amount, fee_rate).map_err(|err| err.to_error_code());
     }
 
+    
+
 
 }
 
