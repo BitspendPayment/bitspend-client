@@ -1,6 +1,6 @@
 use std::env;
 use std::path::PathBuf;
-use bitcoin::bip32::{ExtendedPrivKey, ExtendedPubKey};
+use bitcoin::{bip32::{ExtendedPrivKey, ExtendedPubKey}, blockdata::fee_rate};
 use exports::component::node::types::{Initialization, NodeConfig, BitcoinNetwork, Ipv4SocketAdress};
 use rand::Rng;
 use wasmtime::component::*;
@@ -53,6 +53,11 @@ impl BitspendClient {
         let address = self.world.component_node_types().client_node().call_get_receive_address(&mut self.store, self.component.clone()).unwrap().unwrap();
         return address
     }
+
+    pub fn send_to_address(& mut self, receipient: Vec<u8>, amount: u64, fee_rate: u64)  {
+        self.world.component_node_types().client_node().call_send_to_address(&mut self.store, self.component.clone(), &receipient, amount, fee_rate).unwrap().unwrap();
+
+    }
 }
 
 
@@ -64,9 +69,8 @@ pub fn generate_node_regtest_config() -> NodeConfig {
     let mut rng = rand::thread_rng();
     let entropy: [u8; 16] = rng.gen();
     let  xpriv = ExtendedPrivKey::new_master(bitcoin::Network::Regtest, &entropy).unwrap();
-    let xpub = ExtendedPubKey::from_priv(&secp, &xpriv).to_string();
 
-    return NodeConfig { genesis_blockhash, network, xpub, socket_address}
+    return NodeConfig { genesis_blockhash, network, xpriv : xpriv.to_string(), socket_address}
 
 }
 

@@ -1,6 +1,6 @@
 use std::{collections::BTreeMap, vec};
 
-use bitcoin::{absolute::LockTime, bip32::{ChildNumber, DerivationPath, Xpub}, key::Secp256k1, psbt::{self, Input, PsbtSighashType}, transaction::Version, Address, Amount, CompressedPublicKey, EcdsaSighashType, FeeRate, Network, OutPoint, Psbt, Script, ScriptBuf, Transaction, TxIn, TxOut, Weight};
+use bitcoin::{absolute::LockTime, bip32::{ChildNumber, DerivationPath, Fingerprint, Xpub}, consensus::{encode, Encodable}, key::Secp256k1, psbt::{self, Input, PsbtSighashType}, transaction::Version, Address, Amount, CompressedPublicKey, EcdsaSighashType, FeeRate, Network, OutPoint, Psbt, Script, ScriptBuf, Transaction, TxIn, TxOut, Weight, Witness};
 use serde::Serialize;
 
 use crate::{coin_selection::{CoinSelectionAlgorithm, DefaultCoinSelectionAlgorithm, Excess}, errors::{self, Error}, types::{self, KeychainKind, PartialUtxo, PubkeyDetails, Utxo, WeightedUtxo}};
@@ -16,13 +16,16 @@ pub enum WalletType {
 #[derive(serde::Deserialize, Serialize)]
 #[allow(dead_code)]
 pub struct  WatchOnly {
-    master_public: Xpub,
+    account_xpub: Xpub,
     network: Network,
     pubkey_map: BTreeMap<Vec<u8>, PubkeyDetails>,
     wallet_type: WalletType,
     receive_depth: u32,
     change_depth: u32,
-    utxo_map: BTreeMap<OutPoint, WeightedUtxo>
+    utxo_map: BTreeMap<OutPoint, WeightedUtxo>,
+    account_derivation: DerivationPath,
+    master_fingerprint: Fingerprint,
+
 }
 
 
@@ -30,15 +33,17 @@ pub struct  WatchOnly {
 #[allow(dead_code)]
 impl WatchOnly {
 
-    pub fn new(master_public: Xpub, network: Network) -> Self {
+    pub fn new(account_xpub: Xpub, network: Network, account_derivation: DerivationPath, master_fingerprint: Fingerprint) -> Self {
         WatchOnly {
-            master_public,
+            account_xpub,
             network,
             pubkey_map: BTreeMap::new(),
             utxo_map: BTreeMap::new(),
             wallet_type: WalletType::P2WPKH,
             receive_depth: 0,
             change_depth: 0,
+            account_derivation,
+            master_fingerprint,
         }
     }
 
@@ -81,21 +86,26 @@ impl WatchOnly {
 
     pub fn balance(&mut self) -> Result<Amount, errors::Error> {
         let mut utxos: Vec<_> = self.utxo_map.values().cloned().collect();
+        
         utxos.sort_by(|a,b | a.utxo.is_spent.cmp(&b.utxo.is_spent));
-        let value = utxos.clone().into_iter().fold(Amount::ZERO, |acc,  utxo|  {
-            let inner = utxo.utxo;
-            if inner.is_spent {
-                return acc.checked_sub(inner.txout.value).unwrap(); 
-            }
-            acc.checked_add(inner.txout.value).unwrap()
-        });
+        println!("utxo length {}", utxos.len());
 
-        return  Ok(value);
+        let mut balance = Amount::ZERO;
+        for utxo in utxos {
+            let inner = utxo.utxo;
+            
+            if !inner.is_spent {
+                balance = balance.checked_add(inner.txout.value).unwrap();
+            }
+        }
+    
+        Ok(balance)
+
     }
 
     pub fn get_receive_address(& mut self) -> Result<String ,errors::Error>{
         let secp = Secp256k1::new();
-        let child_pub = self.master_public
+        let child_pub = self.account_xpub
             .ckd_pub(&secp, bitcoin::bip32::ChildNumber::Normal { index: 0 })
             .map_err(|err| errors::Error::PubKeyError(err) )?
             .ckd_pub(&secp, bitcoin::bip32::ChildNumber::Normal { index: self.receive_depth })
@@ -110,7 +120,7 @@ impl WatchOnly {
 
     fn get_change_script(& mut self) -> Result< Vec<u8> ,errors::Error>{
         let secp = Secp256k1::new();
-        let child_pub = self.master_public
+        let child_pub = self.account_xpub
             .ckd_pub(&secp, bitcoin::bip32::ChildNumber::Normal { index: 1 })
             .map_err(|err| errors::Error::PubKeyError(err) )?
             .ckd_pub(&secp, bitcoin::bip32::ChildNumber::Normal { index: self.change_depth })
@@ -128,7 +138,7 @@ impl WatchOnly {
 
     fn derive_pubkey(&self, utxo: Utxo) -> Result<CompressedPublicKey, errors::Error> {
         let secp = Secp256k1::new();
-        let child_pub = self.master_public
+        let child_pub = self.account_xpub
             .ckd_pub(&secp, bitcoin::bip32::ChildNumber::Normal { index: utxo.keychain.as_u32()})
             .map_err(|err| errors::Error::PubKeyError(err) )?
             .ckd_pub(&secp, bitcoin::bip32::ChildNumber::Normal { index: utxo.derivation_index })
@@ -178,8 +188,10 @@ impl WatchOnly {
             let child_pub = self.derive_pubkey(utxo.clone())?;
             let mut map = BTreeMap::new();
 
-            let derivation_path = DerivationPath::from(vec![ChildNumber::Normal{index: utxo.keychain.as_u32()}, ChildNumber::Normal{index: utxo.derivation_index }]);
-            map.insert(child_pub.0, (self.master_public.parent_fingerprint, derivation_path ));
+            let partial_derivation_path = DerivationPath::from(vec![ChildNumber::Normal{index: utxo.keychain.as_u32()}, ChildNumber::Normal{index: utxo.derivation_index }]);
+            let full_derivation_path = self.account_derivation.extend(partial_derivation_path);
+
+            map.insert(child_pub.0, (self.master_fingerprint, full_derivation_path ));
 
             let wpkh = child_pub.wpubkey_hash();
             let redeem_script = ScriptBuf::new_p2wpkh(&wpkh);
@@ -192,6 +204,28 @@ impl WatchOnly {
         psbt.inputs = inputs;
 
         Ok(psbt.serialize())
+
+    }
+
+    pub fn finalise_psbt_tx(& mut self, mut psbt: Psbt) -> Result<Vec<u8>, errors::Error> {
+
+
+        for (index, input) in psbt.inputs.clone().into_iter().enumerate() {
+            let (pubkey, signature) = input.partial_sigs.first_key_value().unwrap();
+            let mut script_witness: Witness = Witness::new();
+            script_witness.push(signature.serialize());
+            script_witness.push(pubkey.to_bytes());
+            psbt.inputs[index].final_script_witness = Some(script_witness);
+        }
+
+        // Clear all the data fields as per the spec.
+        psbt.inputs[0].partial_sigs = BTreeMap::new();
+        psbt.inputs[0].sighash_type = None;
+        psbt.inputs[0].redeem_script = None;
+        psbt.inputs[0].witness_script = None;
+        psbt.inputs[0].bip32_derivation = BTreeMap::new();
+
+        Ok(encode::serialize(&psbt.extract_tx().unwrap()))
 
     }
 }

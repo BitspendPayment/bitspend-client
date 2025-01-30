@@ -42,3 +42,4 @@ path = "wit"
 [package.metadata.component.target.dependencies]
 "component:kv" = {path = "../crates/kv/wit"}
 "component:wallet" = {path = "../crates/wallet/wit"}
+"component:signer" = {path = "../crates/signer/wit"}

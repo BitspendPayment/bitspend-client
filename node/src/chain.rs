@@ -1,5 +1,5 @@
 use std::{iter::zip, sync::Arc};
-use crate::{bindings::component::wallet::types::{PartialUtxo, WatchOnly}, messages::{block_locator::NO_HASH_STOP, compact_filter::CompactFilter, tx_out::TxOut, Inv, InvVect}, util::{self, sha256d, Error}};
+use crate::{bindings::component::wallet::types::{PartialUtxo, WatchOnly}, messages::{block_locator::NO_HASH_STOP, compact_filter::CompactFilter, tx::Tx, tx_out::TxOut, Inv, InvVect}, util::{self, sha256d, Error}};
 
 use bitcoin::network as bitcoin_network;
 use serde::Serialize;
@@ -54,7 +54,7 @@ impl CompactChain {
 
 
     fn get_and_verify_compact_filters(& mut self, start_height: u32, last_block_hash: Hash256) -> Result<Vec<CompactFilter>, Error> {
-        let filter_header = self.p2p.get_compact_filter_headers(start_height, last_block_hash).map_err(|err| Error::FetchCompactFilterHeader(err.to_error_code()))?;
+        let filter_header = self.p2p.get_compact_filter_headers(start_height, last_block_hash).unwrap();
         let filters = self.p2p.get_compact_filters(start_height, last_block_hash).map_err(|err| Error::FetchCompactFilter(err.to_error_code()))?;
 
         
@@ -69,8 +69,7 @@ impl CompactChain {
 
     fn fetch_and_save_utxos(&mut self, filters: Vec<CompactFilter>) -> Result<(), Error> {
         let pub_keys = &self.wallet.get_pubkeys().map_err(|_| Error::WalletError(1))?;
-        println!("pub key is here {:?}", pub_keys.clone());
-        println!("thsi is filters {:?}", filters.clone());
+
         let blockhash_present: Vec<_> = filters.into_iter().filter_map(|filter| {
             let filter_algo = util::block_filter::BlockFilter::new(&filter.filter_bytes);
             
@@ -93,12 +92,13 @@ impl CompactChain {
 
         let blocks = self.p2p.get_block(Inv{ objects: block_inv}).map_err(|err| Error::FetchBlock(err.to_error_code()))?;
 
-        let mut utxos = self.wallet.get_utxos().map_err(|_| Error::WalletError(1))?;
+        let utxos: Vec<PartialUtxo> = self.wallet.get_utxos().map_err(|_| Error::WalletError(1))?;
+        let mut new_utxos: Vec<PartialUtxo> = vec![];
         for block in blocks {
              for txn in block.txns {
                  for (index, output) in txn.outputs.iter().enumerate() {
                     if pub_keys.contains(&output.lock_script) {
-                        utxos.push(PartialUtxo { amount: output.satoshis as u64, txid:  txn.hash().0.to_vec(), vout: index as u32, script: output.lock_script.clone(), is_spent: false });
+                        new_utxos.push(PartialUtxo { amount: output.satoshis as u64, txid:  txn.hash().0.to_vec(), vout: index as u32, script: output.lock_script.clone(), is_spent: false });
                     }
                  }
 
@@ -107,17 +107,20 @@ impl CompactChain {
                        continue;
                    } 
 
-                   //TODO: Ensure all inputs are included
+                   //TODO: Fix this use get
                    for (index,utxo) in  utxos.clone().iter().enumerate() {
                         if utxo.txid == input.prev_output.hash.0.to_vec() && utxo.vout == input.prev_output.index {
-                            utxos[index].is_spent  = true;
+                            println!("found a utxo");
+                            let mut utxo = utxos[index].clone();
+                            utxo.is_spent = true;
+                            new_utxos.push(utxo);
                         }       
                    } 
                 }
              }
         }
-        println!("this are the utxos {:?}", utxos.clone());
-        self.wallet.insert_utxos(&utxos).unwrap();
+
+        self.wallet.insert_utxos(&new_utxos).unwrap();
         Ok(())
 
     }
@@ -126,6 +129,8 @@ impl CompactChain {
         self.p2p.keep_alive().map_err(|_| Error::NetworkError)?;
 
         let mut is_sync = true;
+
+        println!("syncing");
 
         while is_sync {
 
@@ -139,21 +144,26 @@ impl CompactChain {
                 .expect("No block headers found")
                 .hash();
 
+            println!("debug 1");
             // Calculate the range for the for loop
             let start_block = self.chain_state.last_block_height + 1;
-            let end_block = self.chain_state.last_block_height + fetched_block_headers.len() as u64;
-            // Generate ranges for block numbers and block headers counter
-            let block_numbers = (start_block..end_block).step_by(FILTER_SIZE as usize);
-            let block_headers_counters = (FILTER_SIZE..).step_by(FILTER_SIZE as usize);
+            let end_block = start_block + (fetched_block_headers.len() - 1) as u64;
 
+            let mut block_numbers = vec![start_block];
+            //ensure that at least one loop is run
+            if start_block < end_block {
+                block_numbers = (start_block..end_block).step_by(FILTER_SIZE).collect();
+            }
+            // Generate ranges for block numbers and block headers counter
+            let block_headers_counters = (FILTER_SIZE..).step_by(FILTER_SIZE as usize);
+           
             // Use zip to iterate over both ranges simultaneously
-            for (current_block_num, block_headers_counter) in block_numbers.zip(block_headers_counters) {
+            for (current_block_num, block_headers_counter) in block_numbers.into_iter().zip(block_headers_counters) {
                 // Get the last known block hash
                 let last_known_block_hash = fetched_block_headers
                     .get(block_headers_counter as usize - 1)
                     .map(|header| header.hash())
                     .unwrap_or(last_block_hash);
-            
                 // Fetch and verify compact filters for the current range
                 let block_filters = self.get_and_verify_compact_filters(
                     current_block_num as u32,
@@ -163,7 +173,6 @@ impl CompactChain {
                 if block_filters.is_empty() {
                     continue;
                 }
-                        
                 // Fetch and save UTXOs for the verified block filters
                 self.fetch_and_save_utxos(block_filters)?;
             }
@@ -178,6 +187,12 @@ impl CompactChain {
         
         Ok(())
         
+    }
+
+    pub fn send_transaction(& mut self, transaction: Tx) -> Result<(),Error> {
+        self.p2p.keep_alive().map_err(|_| Error::NetworkError)?;
+        self.p2p.send_transaction(transaction)?;
+        Ok(())
     }
 
 

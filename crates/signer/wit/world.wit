@@ -1,0 +1,41 @@
+package component:signer@0.1.0;
+
+interface types {
+
+    variant initialization {
+        old-state(list<u8>),
+        config(config)
+    }
+
+    record config {
+        xpiv: string, 
+    }
+
+    variant error {
+        derivation-error,
+        signing-error
+    }
+
+    type account-xpub = string;
+    type master-fingerprint = string;
+    type account-derivation = string;
+
+    resource simple-signer {
+        constructor(init: initialization);
+
+        derive-account: func() -> result<tuple<account-xpub, master-fingerprint, account-derivation>, error>;
+
+        sign-psbt: func(psbt: list<u8>) -> result<list<u8>, error>;
+
+
+
+
+    }
+
+
+}
+
+/// An example world for the component to target.
+world singer {
+    export types;
+}

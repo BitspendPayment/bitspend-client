@@ -4,7 +4,7 @@ use wasi::{clocks::{monotonic_clock, wall_clock}, random::random, sockets::{inst
 use bitcoin::{
     network as bitcoin_network, Network
 };
-use crate::{messages::{self, block::Block, block_locator::{BlockLocator, NO_HASH_STOP }, commands::{self, PONG}, compact_filter::CompactFilter, compact_filter_header::CompactFilterHeader, filter_locator::FilterLocator, tx::Tx, BlockHeader, Inv, Message, NodeAddr, Version, PROTOCOL_VERSION}, util::Hash256};
+use crate::{messages::{self, block::Block, block_locator::{BlockLocator, NO_HASH_STOP }, commands::{self, PONG}, compact_filter::CompactFilter, compact_filter_header::CompactFilterHeader, filter_locator::FilterLocator, tx::Tx, BlockHeader, Inv, InvVect, Message, NodeAddr, Version, PROTOCOL_VERSION}, util::Hash256};
 use crate::node::CustomIPV4SocketAddress;
 use crate::tcpsocket::WasiTcpSocket;
 use core::sync::atomic::Ordering;
@@ -126,8 +126,6 @@ impl Peer {
 
             match self.receive(PONG) {
                 Ok(_) => {
-                    println!("initialted already");
-
                     Ok(())
                 },
                 Err(_) => {
@@ -178,12 +176,41 @@ impl Peer {
             }
         }
     }
+
+    pub fn send_transaction(&mut self, transaction: Tx) -> Result<()> {
+        let txn_hash = transaction.clone().hash();
+        let inv = Inv { objects: vec![ InvVect { obj_type: 1, hash: txn_hash }] };
+
+        self.send(Message::Inv(inv))?;
+        match self.receive(commands::GETDATA)? {
+            Message::GetData(inv) => {
+                
+                let inv_obect = inv.objects.first().unwrap();
+                if inv_obect.hash == txn_hash {
+                    let transaction_massage = Message::Tx(transaction);
+                    self.send(transaction_massage)?;
+                    return Ok(());
+                } 
+
+                Err(Error::WrongP2PMessage)
+
+               
+            },  
+            Message::NotFound(inv) => {
+                println!("data not found {:?}", inv);
+                return Err(Error::WrongP2PMessage);
+            },
+            _ => {
+                return Err(Error::WrongP2PMessage);
+            }
+        }
+    }
     
-        fn send(&mut self, message: Message) -> Result<()> {
-            message.write(&mut self.output_stream, [0xfa, 0xbf, 0xb5, 0xda]).map_err(Error::IOError)?;
-            self.output_stream.blocking_flush().map_err(Error::StreamingError)?;
-            Ok(())
-      }
+    fn send(&mut self, message: Message) -> Result<()> {
+        message.write(&mut self.output_stream, [0xfa, 0xbf, 0xb5, 0xda]).map_err(Error::IOError)?;
+        self.output_stream.blocking_flush().map_err(Error::StreamingError)?;
+        Ok(())
+    }
 
        
 
@@ -295,6 +322,13 @@ impl P2PControl for P2P {
                 .as_mut()
                 .ok_or(Error::PeerNotFound)?
                 .fetch_transactions(inv)
+        }
+
+        pub fn send_transaction(&mut self, transaction: Tx) -> Result<()> {
+            self.peer
+                .as_mut()
+                .ok_or(Error::PeerNotFound)?
+                .send_transaction(transaction)
         }
     
         pub fn keep_alive(&mut self) -> Result<()> {

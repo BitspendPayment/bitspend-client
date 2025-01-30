@@ -24,7 +24,9 @@ interface types {
     }
 
     record config {
-        xpub: string, 
+        xpub: string,
+        account-derivation: string,
+        master-fingerprint: string, 
         network: bitcoin-network 
     }
 
@@ -55,6 +57,8 @@ interface types {
         balance: func() -> result<u64, error>;
 
         get-receive-address: func() -> result<string, error>;
+
+        finalise-transaction: func(psbt: list<u8>) -> result<list<u8>, error>;
 
    
     }

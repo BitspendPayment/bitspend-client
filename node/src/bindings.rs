@@ -320,6 +320,273 @@ pub mod component {
         }
     }
     #[allow(dead_code)]
+    pub mod signer {
+        #[allow(dead_code, clippy::all)]
+        pub mod types {
+            #[used]
+            #[doc(hidden)]
+            #[cfg(target_arch = "wasm32")]
+            static __FORCE_SECTION_REF: fn() =
+                super::super::super::__link_custom_section_describing_imports;
+            use super::super::super::_rt;
+            #[derive(Clone)]
+            pub struct Config {
+                pub xpiv: _rt::String,
+            }
+            impl ::core::fmt::Debug for Config {
+                fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+                    f.debug_struct("Config").field("xpiv", &self.xpiv).finish()
+                }
+            }
+            #[derive(Clone)]
+            pub enum Initialization {
+                OldState(_rt::Vec<u8>),
+                Config(Config),
+            }
+            impl ::core::fmt::Debug for Initialization {
+                fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+                    match self {
+                        Initialization::OldState(e) => {
+                            f.debug_tuple("Initialization::OldState").field(e).finish()
+                        }
+                        Initialization::Config(e) => {
+                            f.debug_tuple("Initialization::Config").field(e).finish()
+                        }
+                    }
+                }
+            }
+            #[derive(Clone, Copy)]
+            pub enum Error {
+                DerivationError,
+                SigningError,
+            }
+            impl ::core::fmt::Debug for Error {
+                fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+                    match self {
+                        Error::DerivationError => f.debug_tuple("Error::DerivationError").finish(),
+                        Error::SigningError => f.debug_tuple("Error::SigningError").finish(),
+                    }
+                }
+            }
+            impl ::core::fmt::Display for Error {
+                fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+                    write!(f, "{:?}", self)
+                }
+            }
+
+            impl std::error::Error for Error {}
+            pub type AccountXpub = _rt::String;
+            pub type MasterFingerprint = _rt::String;
+            pub type AccountDerivation = _rt::String;
+
+            #[derive(Debug)]
+            #[repr(transparent)]
+            pub struct SimpleSigner {
+                handle: _rt::Resource<SimpleSigner>,
+            }
+
+            impl SimpleSigner {
+                #[doc(hidden)]
+                pub unsafe fn from_handle(handle: u32) -> Self {
+                    Self {
+                        handle: _rt::Resource::from_handle(handle),
+                    }
+                }
+
+                #[doc(hidden)]
+                pub fn take_handle(&self) -> u32 {
+                    _rt::Resource::take_handle(&self.handle)
+                }
+
+                #[doc(hidden)]
+                pub fn handle(&self) -> u32 {
+                    _rt::Resource::handle(&self.handle)
+                }
+            }
+
+            unsafe impl _rt::WasmResource for SimpleSigner {
+                #[inline]
+                unsafe fn drop(_handle: u32) {
+                    #[cfg(not(target_arch = "wasm32"))]
+                    unreachable!();
+
+                    #[cfg(target_arch = "wasm32")]
+                    {
+                        #[link(wasm_import_module = "component:signer/types@0.1.0")]
+                        extern "C" {
+                            #[link_name = "[resource-drop]simple-signer"]
+                            fn drop(_: u32);
+                        }
+
+                        drop(_handle);
+                    }
+                }
+            }
+
+            impl SimpleSigner {
+                #[allow(unused_unsafe, clippy::all)]
+                pub fn new(init: &Initialization) -> Self {
+                    unsafe {
+                        let (result3_0, result3_1, result3_2) = match init {
+                            Initialization::OldState(e) => {
+                                let vec0 = e;
+                                let ptr0 = vec0.as_ptr().cast::<u8>();
+                                let len0 = vec0.len();
+
+                                (0i32, ptr0.cast_mut(), len0)
+                            }
+                            Initialization::Config(e) => {
+                                let Config { xpiv: xpiv1 } = e;
+                                let vec2 = xpiv1;
+                                let ptr2 = vec2.as_ptr().cast::<u8>();
+                                let len2 = vec2.len();
+
+                                (1i32, ptr2.cast_mut(), len2)
+                            }
+                        };
+
+                        #[cfg(target_arch = "wasm32")]
+                        #[link(wasm_import_module = "component:signer/types@0.1.0")]
+                        extern "C" {
+                            #[link_name = "[constructor]simple-signer"]
+                            fn wit_import(_: i32, _: *mut u8, _: usize) -> i32;
+                        }
+
+                        #[cfg(not(target_arch = "wasm32"))]
+                        fn wit_import(_: i32, _: *mut u8, _: usize) -> i32 {
+                            unreachable!()
+                        }
+                        let ret = wit_import(result3_0, result3_1, result3_2);
+                        SimpleSigner::from_handle(ret as u32)
+                    }
+                }
+            }
+            impl SimpleSigner {
+                #[allow(unused_unsafe, clippy::all)]
+                pub fn derive_account(
+                    &self,
+                ) -> Result<(AccountXpub, MasterFingerprint, AccountDerivation), Error>
+                {
+                    unsafe {
+                        #[repr(align(4))]
+                        struct RetArea([::core::mem::MaybeUninit<u8>; 28]);
+                        let mut ret_area = RetArea([::core::mem::MaybeUninit::uninit(); 28]);
+                        let ptr0 = ret_area.0.as_mut_ptr().cast::<u8>();
+                        #[cfg(target_arch = "wasm32")]
+                        #[link(wasm_import_module = "component:signer/types@0.1.0")]
+                        extern "C" {
+                            #[link_name = "[method]simple-signer.derive-account"]
+                            fn wit_import(_: i32, _: *mut u8);
+                        }
+
+                        #[cfg(not(target_arch = "wasm32"))]
+                        fn wit_import(_: i32, _: *mut u8) {
+                            unreachable!()
+                        }
+                        wit_import((self).handle() as i32, ptr0);
+                        let l1 = i32::from(*ptr0.add(0).cast::<u8>());
+                        match l1 {
+                            0 => {
+                                let e = {
+                                    let l2 = *ptr0.add(4).cast::<*mut u8>();
+                                    let l3 = *ptr0.add(8).cast::<usize>();
+                                    let len4 = l3;
+                                    let bytes4 = _rt::Vec::from_raw_parts(l2.cast(), len4, len4);
+                                    let l5 = *ptr0.add(12).cast::<*mut u8>();
+                                    let l6 = *ptr0.add(16).cast::<usize>();
+                                    let len7 = l6;
+                                    let bytes7 = _rt::Vec::from_raw_parts(l5.cast(), len7, len7);
+                                    let l8 = *ptr0.add(20).cast::<*mut u8>();
+                                    let l9 = *ptr0.add(24).cast::<usize>();
+                                    let len10 = l9;
+                                    let bytes10 = _rt::Vec::from_raw_parts(l8.cast(), len10, len10);
+
+                                    (
+                                        _rt::string_lift(bytes4),
+                                        _rt::string_lift(bytes7),
+                                        _rt::string_lift(bytes10),
+                                    )
+                                };
+                                Ok(e)
+                            }
+                            1 => {
+                                let e = {
+                                    let l11 = i32::from(*ptr0.add(4).cast::<u8>());
+                                    let v12 = match l11 {
+                                        0 => Error::DerivationError,
+                                        n => {
+                                            debug_assert_eq!(n, 1, "invalid enum discriminant");
+                                            Error::SigningError
+                                        }
+                                    };
+
+                                    v12
+                                };
+                                Err(e)
+                            }
+                            _ => _rt::invalid_enum_discriminant(),
+                        }
+                    }
+                }
+            }
+            impl SimpleSigner {
+                #[allow(unused_unsafe, clippy::all)]
+                pub fn sign_psbt(&self, psbt: &[u8]) -> Result<_rt::Vec<u8>, Error> {
+                    unsafe {
+                        #[repr(align(4))]
+                        struct RetArea([::core::mem::MaybeUninit<u8>; 12]);
+                        let mut ret_area = RetArea([::core::mem::MaybeUninit::uninit(); 12]);
+                        let vec0 = psbt;
+                        let ptr0 = vec0.as_ptr().cast::<u8>();
+                        let len0 = vec0.len();
+                        let ptr1 = ret_area.0.as_mut_ptr().cast::<u8>();
+                        #[cfg(target_arch = "wasm32")]
+                        #[link(wasm_import_module = "component:signer/types@0.1.0")]
+                        extern "C" {
+                            #[link_name = "[method]simple-signer.sign-psbt"]
+                            fn wit_import(_: i32, _: *mut u8, _: usize, _: *mut u8);
+                        }
+
+                        #[cfg(not(target_arch = "wasm32"))]
+                        fn wit_import(_: i32, _: *mut u8, _: usize, _: *mut u8) {
+                            unreachable!()
+                        }
+                        wit_import((self).handle() as i32, ptr0.cast_mut(), len0, ptr1);
+                        let l2 = i32::from(*ptr1.add(0).cast::<u8>());
+                        match l2 {
+                            0 => {
+                                let e = {
+                                    let l3 = *ptr1.add(4).cast::<*mut u8>();
+                                    let l4 = *ptr1.add(8).cast::<usize>();
+                                    let len5 = l4;
+
+                                    _rt::Vec::from_raw_parts(l3.cast(), len5, len5)
+                                };
+                                Ok(e)
+                            }
+                            1 => {
+                                let e = {
+                                    let l6 = i32::from(*ptr1.add(4).cast::<u8>());
+                                    let v7 = match l6 {
+                                        0 => Error::DerivationError,
+                                        n => {
+                                            debug_assert_eq!(n, 1, "invalid enum discriminant");
+                                            Error::SigningError
+                                        }
+                                    };
+
+                                    v7
+                                };
+                                Err(e)
+                            }
+                            _ => _rt::invalid_enum_discriminant(),
+                        }
+                    }
+                }
+            }
+        }
+    }
+    #[allow(dead_code)]
     pub mod wallet {
         #[allow(dead_code, clippy::all)]
         pub mod types {
@@ -408,12 +675,16 @@ pub mod component {
             #[derive(Clone)]
             pub struct Config {
                 pub xpub: _rt::String,
+                pub account_derivation: _rt::String,
+                pub master_fingerprint: _rt::String,
                 pub network: BitcoinNetwork,
             }
             impl ::core::fmt::Debug for Config {
                 fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
                     f.debug_struct("Config")
                         .field("xpub", &self.xpub)
+                        .field("account-derivation", &self.account_derivation)
+                        .field("master-fingerprint", &self.master_fingerprint)
                         .field("network", &self.network)
                         .finish()
                 }
@@ -504,24 +775,59 @@ pub mod component {
                 #[allow(unused_unsafe, clippy::all)]
                 pub fn new(init: &Initialization) -> Self {
                     unsafe {
-                        let (result3_0, result3_1, result3_2, result3_3) = match init {
+                        let (
+                            result5_0,
+                            result5_1,
+                            result5_2,
+                            result5_3,
+                            result5_4,
+                            result5_5,
+                            result5_6,
+                            result5_7,
+                        ) = match init {
                             Initialization::OldState(e) => {
                                 let vec0 = e;
                                 let ptr0 = vec0.as_ptr().cast::<u8>();
                                 let len0 = vec0.len();
 
-                                (0i32, ptr0.cast_mut(), len0, 0i32)
+                                (
+                                    0i32,
+                                    ptr0.cast_mut(),
+                                    len0,
+                                    ::core::ptr::null_mut(),
+                                    0usize,
+                                    ::core::ptr::null_mut(),
+                                    0usize,
+                                    0i32,
+                                )
                             }
                             Initialization::Config(e) => {
                                 let Config {
                                     xpub: xpub1,
+                                    account_derivation: account_derivation1,
+                                    master_fingerprint: master_fingerprint1,
                                     network: network1,
                                 } = e;
                                 let vec2 = xpub1;
                                 let ptr2 = vec2.as_ptr().cast::<u8>();
                                 let len2 = vec2.len();
+                                let vec3 = account_derivation1;
+                                let ptr3 = vec3.as_ptr().cast::<u8>();
+                                let len3 = vec3.len();
+                                let vec4 = master_fingerprint1;
+                                let ptr4 = vec4.as_ptr().cast::<u8>();
+                                let len4 = vec4.len();
 
-                                (1i32, ptr2.cast_mut(), len2, network1.clone() as i32)
+                                (
+                                    1i32,
+                                    ptr2.cast_mut(),
+                                    len2,
+                                    ptr3.cast_mut(),
+                                    len3,
+                                    ptr4.cast_mut(),
+                                    len4,
+                                    network1.clone() as i32,
+                                )
                             }
                         };
 
@@ -529,14 +835,35 @@ pub mod component {
                         #[link(wasm_import_module = "component:wallet/types@0.1.0")]
                         extern "C" {
                             #[link_name = "[constructor]watch-only"]
-                            fn wit_import(_: i32, _: *mut u8, _: usize, _: i32) -> i32;
+                            fn wit_import(
+                                _: i32,
+                                _: *mut u8,
+                                _: usize,
+                                _: *mut u8,
+                                _: usize,
+                                _: *mut u8,
+                                _: usize,
+                                _: i32,
+                            ) -> i32;
                         }
 
                         #[cfg(not(target_arch = "wasm32"))]
-                        fn wit_import(_: i32, _: *mut u8, _: usize, _: i32) -> i32 {
+                        fn wit_import(
+                            _: i32,
+                            _: *mut u8,
+                            _: usize,
+                            _: *mut u8,
+                            _: usize,
+                            _: *mut u8,
+                            _: usize,
+                            _: i32,
+                        ) -> i32 {
                             unreachable!()
                         }
-                        let ret = wit_import(result3_0, result3_1, result3_2, result3_3);
+                        let ret = wit_import(
+                            result5_0, result5_1, result5_2, result5_3, result5_4, result5_5,
+                            result5_6, result5_7,
+                        );
                         WatchOnly::from_handle(ret as u32)
                     }
                 }
@@ -1030,6 +1357,64 @@ pub mod component {
                     }
                 }
             }
+            impl WatchOnly {
+                #[allow(unused_unsafe, clippy::all)]
+                pub fn finalise_transaction(&self, psbt: &[u8]) -> Result<_rt::Vec<u8>, Error> {
+                    unsafe {
+                        #[repr(align(4))]
+                        struct RetArea([::core::mem::MaybeUninit<u8>; 12]);
+                        let mut ret_area = RetArea([::core::mem::MaybeUninit::uninit(); 12]);
+                        let vec0 = psbt;
+                        let ptr0 = vec0.as_ptr().cast::<u8>();
+                        let len0 = vec0.len();
+                        let ptr1 = ret_area.0.as_mut_ptr().cast::<u8>();
+                        #[cfg(target_arch = "wasm32")]
+                        #[link(wasm_import_module = "component:wallet/types@0.1.0")]
+                        extern "C" {
+                            #[link_name = "[method]watch-only.finalise-transaction"]
+                            fn wit_import(_: i32, _: *mut u8, _: usize, _: *mut u8);
+                        }
+
+                        #[cfg(not(target_arch = "wasm32"))]
+                        fn wit_import(_: i32, _: *mut u8, _: usize, _: *mut u8) {
+                            unreachable!()
+                        }
+                        wit_import((self).handle() as i32, ptr0.cast_mut(), len0, ptr1);
+                        let l2 = i32::from(*ptr1.add(0).cast::<u8>());
+                        match l2 {
+                            0 => {
+                                let e = {
+                                    let l3 = *ptr1.add(4).cast::<*mut u8>();
+                                    let l4 = *ptr1.add(8).cast::<usize>();
+                                    let len5 = l4;
+
+                                    _rt::Vec::from_raw_parts(l3.cast(), len5, len5)
+                                };
+                                Ok(e)
+                            }
+                            1 => {
+                                let e = {
+                                    let l6 = i32::from(*ptr1.add(4).cast::<u8>());
+                                    let v7 = match l6 {
+                                        0 => Error::CoinSelection,
+                                        1 => Error::Psbt,
+                                        2 => Error::MissingNonWitnessUtxo,
+                                        3 => Error::NoPubkey,
+                                        n => {
+                                            debug_assert_eq!(n, 4, "invalid enum discriminant");
+                                            Error::PubkeyError
+                                        }
+                                    };
+
+                                    v7
+                                };
+                                Err(e)
+                            }
+                            _ => _rt::invalid_enum_discriminant(),
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -1116,7 +1501,7 @@ pub mod exports {
                     pub genesis_blockhash: _rt::String,
                     pub network: BitcoinNetwork,
                     pub socket_address: Ipv4SocketAdress,
-                    pub xpub: _rt::String,
+                    pub xpriv: _rt::String,
                 }
                 impl ::core::fmt::Debug for NodeConfig {
                     fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
@@ -1124,7 +1509,7 @@ pub mod exports {
                             .field("genesis-blockhash", &self.genesis_blockhash)
                             .field("network", &self.network)
                             .field("socket-address", &self.socket_address)
-                            .field("xpub", &self.xpub)
+                            .field("xpriv", &self.xpriv)
                             .finish()
                     }
                 }
@@ -1320,7 +1705,7 @@ pub mod exports {
                                         address: (arg4 as u8, arg5 as u8, arg6 as u8, arg7 as u8),
                                         port: arg8 as u16,
                                     },
-                                    xpub: _rt::string_lift(bytes1),
+                                    xpriv: _rt::string_lift(bytes1),
                                 }
                             };
                             Initialization::Config(e2)
@@ -1397,6 +1782,38 @@ pub mod exports {
                         _ => (),
                     }
                 }
+                #[doc(hidden)]
+                #[allow(non_snake_case)]
+                pub unsafe fn _export_method_client_node_send_to_address_cabi<
+                    T: GuestClientNode,
+                >(
+                    arg0: *mut u8,
+                    arg1: *mut u8,
+                    arg2: usize,
+                    arg3: i64,
+                    arg4: i64,
+                ) -> *mut u8 {
+                    #[cfg(target_arch = "wasm32")]
+                    _rt::run_ctors_once();
+                    let len0 = arg2;
+                    let result1 = T::send_to_address(
+                        ClientNodeBorrow::lift(arg0 as u32 as usize).get(),
+                        _rt::Vec::from_raw_parts(arg1.cast(), len0, len0),
+                        arg3 as u64,
+                        arg4 as u64,
+                    );
+                    let ptr2 = _RET_AREA.0.as_mut_ptr().cast::<u8>();
+                    match result1 {
+                        Ok(_) => {
+                            *ptr2.add(0).cast::<u8>() = (0i32) as u8;
+                        }
+                        Err(e) => {
+                            *ptr2.add(0).cast::<u8>() = (1i32) as u8;
+                            *ptr2.add(4).cast::<i32>() = _rt::as_i32(e);
+                        }
+                    };
+                    ptr2
+                }
                 pub trait Guest {
                     type ClientNode: GuestClientNode;
                 }
@@ -1448,42 +1865,52 @@ pub mod exports {
                     fn new(init: Initialization) -> Self;
                     fn get_balance(&self) -> Result<u64, u32>;
                     fn get_receive_address(&self) -> Result<_rt::String, u32>;
+                    fn send_to_address(
+                        &self,
+                        recepient: _rt::Vec<u8>,
+                        amount: u64,
+                        fee_rate: u64,
+                    ) -> Result<(), u32>;
                 }
                 #[doc(hidden)]
 
                 macro_rules! __export_component_node_types_0_1_0_cabi{
-    ($ty:ident with_types_in $($path_to_types:tt)*) => (const _: () = {
+  ($ty:ident with_types_in $($path_to_types:tt)*) => (const _: () = {
 
-      #[export_name = "component:node/types@0.1.0#[constructor]client-node"]
-      unsafe extern "C" fn export_constructor_client_node(arg0: i32,arg1: *mut u8,arg2: usize,arg3: i32,arg4: i32,arg5: i32,arg6: i32,arg7: i32,arg8: i32,arg9: *mut u8,arg10: usize,) -> i32 {
-        $($path_to_types)*::_export_constructor_client_node_cabi::<<$ty as $($path_to_types)*::Guest>::ClientNode>(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10)
-      }
-      #[export_name = "component:node/types@0.1.0#[method]client-node.get-balance"]
-      unsafe extern "C" fn export_method_client_node_get_balance(arg0: *mut u8,) -> *mut u8 {
-        $($path_to_types)*::_export_method_client_node_get_balance_cabi::<<$ty as $($path_to_types)*::Guest>::ClientNode>(arg0)
-      }
-      #[export_name = "component:node/types@0.1.0#[method]client-node.get-receive-address"]
-      unsafe extern "C" fn export_method_client_node_get_receive_address(arg0: *mut u8,) -> *mut u8 {
-        $($path_to_types)*::_export_method_client_node_get_receive_address_cabi::<<$ty as $($path_to_types)*::Guest>::ClientNode>(arg0)
-      }
-      #[export_name = "cabi_post_component:node/types@0.1.0#[method]client-node.get-receive-address"]
-      unsafe extern "C" fn _post_return_method_client_node_get_receive_address(arg0: *mut u8,) {
-        $($path_to_types)*::__post_return_method_client_node_get_receive_address::<<$ty as $($path_to_types)*::Guest>::ClientNode>(arg0)
-      }
+    #[export_name = "component:node/types@0.1.0#[constructor]client-node"]
+    unsafe extern "C" fn export_constructor_client_node(arg0: i32,arg1: *mut u8,arg2: usize,arg3: i32,arg4: i32,arg5: i32,arg6: i32,arg7: i32,arg8: i32,arg9: *mut u8,arg10: usize,) -> i32 {
+      $($path_to_types)*::_export_constructor_client_node_cabi::<<$ty as $($path_to_types)*::Guest>::ClientNode>(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10)
+    }
+    #[export_name = "component:node/types@0.1.0#[method]client-node.get-balance"]
+    unsafe extern "C" fn export_method_client_node_get_balance(arg0: *mut u8,) -> *mut u8 {
+      $($path_to_types)*::_export_method_client_node_get_balance_cabi::<<$ty as $($path_to_types)*::Guest>::ClientNode>(arg0)
+    }
+    #[export_name = "component:node/types@0.1.0#[method]client-node.get-receive-address"]
+    unsafe extern "C" fn export_method_client_node_get_receive_address(arg0: *mut u8,) -> *mut u8 {
+      $($path_to_types)*::_export_method_client_node_get_receive_address_cabi::<<$ty as $($path_to_types)*::Guest>::ClientNode>(arg0)
+    }
+    #[export_name = "cabi_post_component:node/types@0.1.0#[method]client-node.get-receive-address"]
+    unsafe extern "C" fn _post_return_method_client_node_get_receive_address(arg0: *mut u8,) {
+      $($path_to_types)*::__post_return_method_client_node_get_receive_address::<<$ty as $($path_to_types)*::Guest>::ClientNode>(arg0)
+    }
+    #[export_name = "component:node/types@0.1.0#[method]client-node.send-to-address"]
+    unsafe extern "C" fn export_method_client_node_send_to_address(arg0: *mut u8,arg1: *mut u8,arg2: usize,arg3: i64,arg4: i64,) -> *mut u8 {
+      $($path_to_types)*::_export_method_client_node_send_to_address_cabi::<<$ty as $($path_to_types)*::Guest>::ClientNode>(arg0, arg1, arg2, arg3, arg4)
+    }
 
-      const _: () = {
-        #[doc(hidden)]
-        #[export_name = "component:node/types@0.1.0#[dtor]client-node"]
-        #[allow(non_snake_case)]
-        unsafe extern "C" fn dtor(rep: *mut u8) {
-          $($path_to_types)*::ClientNode::dtor::<
-          <$ty as $($path_to_types)*::Guest>::ClientNode
-          >(rep)
-        }
-      };
+    const _: () = {
+      #[doc(hidden)]
+      #[export_name = "component:node/types@0.1.0#[dtor]client-node"]
+      #[allow(non_snake_case)]
+      unsafe extern "C" fn dtor(rep: *mut u8) {
+        $($path_to_types)*::ClientNode::dtor::<
+        <$ty as $($path_to_types)*::Guest>::ClientNode
+        >(rep)
+      }
+    };
 
-    };);
-  }
+  };);
+}
                 #[doc(hidden)]
                 pub(crate) use __export_component_node_types_0_1_0_cabi;
                 #[repr(align(8))]
@@ -1762,50 +2189,62 @@ pub(crate) use __export_nodeworld_impl as export;
 #[cfg(target_arch = "wasm32")]
 #[link_section = "component-type:wit-bindgen:0.25.0:nodeworld:encoded world"]
 #[doc(hidden)]
-pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 2067] = *b"\
-\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\x93\x0f\x01A\x02\x01\
-A\x06\x01B\x10\x01q\x06\x0fopen-file-error\0\0\x0cstream-error\0\0\x0efile-not-f\
+pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 2673] = *b"\
+\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xf1\x13\x01A\x02\x01\
+A\x08\x01B\x10\x01q\x06\x0fopen-file-error\0\0\x0cstream-error\0\0\x0efile-not-f\
 ound\x01w\0\x0cinvalid-data\0\0\x0bparse-error\0\0\x0fentry-not-found\0\0\x04\0\x05\
 error\x03\0\0\x04\0\x07kvstore\x03\x01\x01i\x02\x01@\0\0\x03\x04\0\x14[construct\
 or]kvstore\x01\x04\x01h\x02\x01p}\x01j\0\x01\x01\x01@\x03\x04self\x05\x03keys\x05\
 value\x06\0\x07\x04\0\x16[method]kvstore.insert\x01\x08\x01j\x01\x06\x01\x01\x01\
 @\x02\x04self\x05\x03keys\0\x09\x04\0\x13[method]kvstore.get\x01\x0a\x01@\x02\x04\
 self\x05\x03keys\0\x07\x04\0\x16[method]kvstore.delete\x01\x0b\x03\x01\x18compon\
-ent:kv/types@0.1.0\x05\0\x01B'\x01m\x05\x07bitcoin\x07testnet\x08testnet4\x06sig\
+ent:kv/types@0.1.0\x05\0\x01B)\x01m\x05\x07bitcoin\x07testnet\x08testnet4\x06sig\
 net\x07regtest\x04\0\x0fbitcoin-network\x03\0\0\x01q\x05\x0ecoin-selection\0\0\x04\
 psbt\0\0\x18missing-non-witness-utxo\0\0\x09no-pubkey\0\0\x0cpubkey-error\0\0\x04\
-\0\x05error\x03\0\x02\x01r\x02\x04xpubs\x07network\x01\x04\0\x06config\x03\0\x04\
-\x01p}\x01q\x02\x09old-state\x01\x06\0\x06config\x01\x05\0\x04\0\x0einitializati\
-on\x03\0\x07\x01r\x05\x04txid\x06\x04vouty\x06amountw\x06script\x06\x08is-spent\x7f\
-\x04\0\x0cpartial-utxo\x03\0\x09\x01p}\x04\0\x06pubkey\x03\0\x0b\x04\0\x0awatch-\
-only\x03\x01\x01i\x0d\x01@\x01\x04init\x08\0\x0e\x04\0\x17[constructor]watch-onl\
-y\x01\x0f\x01h\x0d\x01j\x01s\x01\x03\x01@\x01\x04self\x10\0\x11\x04\0\x1e[method\
-]watch-only.new-address\x01\x12\x01j\x01\x06\x01\x03\x01@\x04\x04self\x10\x09rec\
-epient\x06\x06amountw\x08fee-ratew\0\x13\x04\0%[method]watch-only.create-transac\
-tion\x01\x14\x01p\x0a\x01j\x01\x15\x01\x03\x01@\x01\x04self\x10\0\x16\x04\0\x1c[\
-method]watch-only.get-utxos\x01\x17\x01j\0\x01\x03\x01@\x02\x04self\x10\x05utxos\
-\x15\0\x18\x04\0\x1f[method]watch-only.insert-utxos\x01\x19\x01p\x0c\x01j\x01\x1a\
-\x01\x03\x01@\x01\x04self\x10\0\x1b\x04\0\x1e[method]watch-only.get-pubkeys\x01\x1c\
-\x01j\x01w\x01\x03\x01@\x01\x04self\x10\0\x1d\x04\0\x1a[method]watch-only.balanc\
-e\x01\x1e\x04\0&[method]watch-only.get-receive-address\x01\x12\x03\x01\x1ccompon\
-ent:wallet/types@0.1.0\x05\x01\x01B\x1b\x01r\x02\x03keys\x05values\x04\0\x0ekey-\
-value-pair\x03\0\0\x01q\x0a\x0dkey-not-found\0\0\x12key-already-exists\0\0\x10un\
-expected-error\0\0\x12key-overflow-error\0\0\x14value-overflow-error\0\0\x14try-\
-from-slice-error\0\0\x0autf8-error\0\0\x10filesystem-error\x01}\0\x13invalid-mag\
-ic-bytes\0\0\x0cstream-error\0\0\x04\0\x0bstore-error\x03\0\x02\x01o\x04}}}}\x01\
-r\x02\x07address\x04\x04port{\x04\0\x12ipv4-socket-adress\x03\0\x05\x01m\x05\x07\
-bitcoin\x07testnet\x08testnet4\x06signet\x07regtest\x04\0\x0fbitcoin-network\x03\
-\0\x07\x01ks\x01r\x04\x03fee\x09\x19estimated-settlement-timew\x02ids\x04rates\x04\
-\0\x10offering-bargain\x03\0\x0a\x01r\x04\x11genesis-blockhashs\x07network\x08\x0e\
-socket-address\x06\x04xpubs\x04\0\x0bnode-config\x03\0\x0c\x01q\x02\x09old-state\
-\0\0\x06config\x01\x0d\0\x04\0\x0einitialization\x03\0\x0e\x04\0\x0bclient-node\x03\
-\x01\x01i\x10\x01@\x01\x04init\x0f\0\x11\x04\0\x18[constructor]client-node\x01\x12\
-\x01h\x10\x01j\x01w\x01y\x01@\x01\x04self\x13\0\x14\x04\0\x1f[method]client-node\
-.get-balance\x01\x15\x01j\x01s\x01y\x01@\x01\x04self\x13\0\x16\x04\0'[method]cli\
-ent-node.get-receive-address\x01\x17\x04\x01\x1acomponent:node/types@0.1.0\x05\x02\
-\x04\x01\x1ecomponent:node/nodeworld@0.1.0\x04\0\x0b\x0f\x01\0\x09nodeworld\x03\0\
-\0\0G\x09producers\x01\x0cprocessed-by\x02\x0dwit-component\x070.208.1\x10wit-bi\
-ndgen-rust\x060.25.0";
+\0\x05error\x03\0\x02\x01r\x04\x04xpubs\x12account-derivations\x12master-fingerp\
+rints\x07network\x01\x04\0\x06config\x03\0\x04\x01p}\x01q\x02\x09old-state\x01\x06\
+\0\x06config\x01\x05\0\x04\0\x0einitialization\x03\0\x07\x01r\x05\x04txid\x06\x04\
+vouty\x06amountw\x06script\x06\x08is-spent\x7f\x04\0\x0cpartial-utxo\x03\0\x09\x01\
+p}\x04\0\x06pubkey\x03\0\x0b\x04\0\x0awatch-only\x03\x01\x01i\x0d\x01@\x01\x04in\
+it\x08\0\x0e\x04\0\x17[constructor]watch-only\x01\x0f\x01h\x0d\x01j\x01s\x01\x03\
+\x01@\x01\x04self\x10\0\x11\x04\0\x1e[method]watch-only.new-address\x01\x12\x01j\
+\x01\x06\x01\x03\x01@\x04\x04self\x10\x09recepient\x06\x06amountw\x08fee-ratew\0\
+\x13\x04\0%[method]watch-only.create-transaction\x01\x14\x01p\x0a\x01j\x01\x15\x01\
+\x03\x01@\x01\x04self\x10\0\x16\x04\0\x1c[method]watch-only.get-utxos\x01\x17\x01\
+j\0\x01\x03\x01@\x02\x04self\x10\x05utxos\x15\0\x18\x04\0\x1f[method]watch-only.\
+insert-utxos\x01\x19\x01p\x0c\x01j\x01\x1a\x01\x03\x01@\x01\x04self\x10\0\x1b\x04\
+\0\x1e[method]watch-only.get-pubkeys\x01\x1c\x01j\x01w\x01\x03\x01@\x01\x04self\x10\
+\0\x1d\x04\0\x1a[method]watch-only.balance\x01\x1e\x04\0&[method]watch-only.get-\
+receive-address\x01\x12\x01@\x02\x04self\x10\x04psbt\x06\0\x13\x04\0'[method]wat\
+ch-only.finalise-transaction\x01\x1f\x03\x01\x1ccomponent:wallet/types@0.1.0\x05\
+\x01\x01B\x19\x01r\x01\x04xpivs\x04\0\x06config\x03\0\0\x01p}\x01q\x02\x09old-st\
+ate\x01\x02\0\x06config\x01\x01\0\x04\0\x0einitialization\x03\0\x03\x01q\x02\x10\
+derivation-error\0\0\x0dsigning-error\0\0\x04\0\x05error\x03\0\x05\x01s\x04\0\x0c\
+account-xpub\x03\0\x07\x01s\x04\0\x12master-fingerprint\x03\0\x09\x01s\x04\0\x12\
+account-derivation\x03\0\x0b\x04\0\x0dsimple-signer\x03\x01\x01i\x0d\x01@\x01\x04\
+init\x04\0\x0e\x04\0\x1a[constructor]simple-signer\x01\x0f\x01h\x0d\x01o\x03\x08\
+\x0a\x0c\x01j\x01\x11\x01\x06\x01@\x01\x04self\x10\0\x12\x04\0$[method]simple-si\
+gner.derive-account\x01\x13\x01j\x01\x02\x01\x06\x01@\x02\x04self\x10\x04psbt\x02\
+\0\x14\x04\0\x1f[method]simple-signer.sign-psbt\x01\x15\x03\x01\x1ccomponent:sig\
+ner/types@0.1.0\x05\x02\x01B\x1f\x01r\x02\x03keys\x05values\x04\0\x0ekey-value-p\
+air\x03\0\0\x01q\x0a\x0dkey-not-found\0\0\x12key-already-exists\0\0\x10unexpecte\
+d-error\0\0\x12key-overflow-error\0\0\x14value-overflow-error\0\0\x14try-from-sl\
+ice-error\0\0\x0autf8-error\0\0\x10filesystem-error\x01}\0\x13invalid-magic-byte\
+s\0\0\x0cstream-error\0\0\x04\0\x0bstore-error\x03\0\x02\x01o\x04}}}}\x01r\x02\x07\
+address\x04\x04port{\x04\0\x12ipv4-socket-adress\x03\0\x05\x01m\x05\x07bitcoin\x07\
+testnet\x08testnet4\x06signet\x07regtest\x04\0\x0fbitcoin-network\x03\0\x07\x01k\
+s\x01r\x04\x03fee\x09\x19estimated-settlement-timew\x02ids\x04rates\x04\0\x10off\
+ering-bargain\x03\0\x0a\x01r\x04\x11genesis-blockhashs\x07network\x08\x0esocket-\
+address\x06\x05xprivs\x04\0\x0bnode-config\x03\0\x0c\x01q\x02\x09old-state\0\0\x06\
+config\x01\x0d\0\x04\0\x0einitialization\x03\0\x0e\x04\0\x0bclient-node\x03\x01\x01\
+i\x10\x01@\x01\x04init\x0f\0\x11\x04\0\x18[constructor]client-node\x01\x12\x01h\x10\
+\x01j\x01w\x01y\x01@\x01\x04self\x13\0\x14\x04\0\x1f[method]client-node.get-bala\
+nce\x01\x15\x01j\x01s\x01y\x01@\x01\x04self\x13\0\x16\x04\0'[method]client-node.\
+get-receive-address\x01\x17\x01p}\x01j\0\x01y\x01@\x04\x04self\x13\x09recepient\x18\
+\x06amountw\x08fee-ratew\0\x19\x04\0#[method]client-node.send-to-address\x01\x1a\
+\x04\x01\x1acomponent:node/types@0.1.0\x05\x03\x04\x01\x1ecomponent:node/nodewor\
+ld@0.1.0\x04\0\x0b\x0f\x01\0\x09nodeworld\x03\0\0\0G\x09producers\x01\x0cprocess\
+ed-by\x02\x0dwit-component\x070.208.1\x10wit-bindgen-rust\x060.25.0";
 
 #[inline(never)]
 #[doc(hidden)]
