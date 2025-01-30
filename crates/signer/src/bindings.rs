@@ -368,6 +368,35 @@ pub mod exports {
                         _ => (),
                     }
                 }
+                #[doc(hidden)]
+                #[allow(non_snake_case)]
+                pub unsafe fn _export_method_simple_signer_get_state_cabi<T: GuestSimpleSigner>(
+                    arg0: *mut u8,
+                ) -> *mut u8 {
+                    #[cfg(target_arch = "wasm32")]
+                    _rt::run_ctors_once();
+                    let result0 =
+                        T::get_state(SimpleSignerBorrow::lift(arg0 as u32 as usize).get());
+                    let ptr1 = _RET_AREA.0.as_mut_ptr().cast::<u8>();
+                    let vec2 = (result0).into_boxed_slice();
+                    let ptr2 = vec2.as_ptr().cast::<u8>();
+                    let len2 = vec2.len();
+                    ::core::mem::forget(vec2);
+                    *ptr1.add(4).cast::<usize>() = len2;
+                    *ptr1.add(0).cast::<*mut u8>() = ptr2.cast_mut();
+                    ptr1
+                }
+                #[doc(hidden)]
+                #[allow(non_snake_case)]
+                pub unsafe fn __post_return_method_simple_signer_get_state<T: GuestSimpleSigner>(
+                    arg0: *mut u8,
+                ) {
+                    let l0 = *arg0.add(0).cast::<*mut u8>();
+                    let l1 = *arg0.add(4).cast::<usize>();
+                    let base2 = l0;
+                    let len2 = l1;
+                    _rt::cabi_dealloc(base2, len2 * 1, 1);
+                }
                 pub trait Guest {
                     type SimpleSigner: GuestSimpleSigner;
                 }
@@ -421,46 +450,55 @@ pub mod exports {
                         &self,
                     ) -> Result<(AccountXpub, MasterFingerprint, AccountDerivation), Error>;
                     fn sign_psbt(&self, psbt: _rt::Vec<u8>) -> Result<_rt::Vec<u8>, Error>;
+                    fn get_state(&self) -> _rt::Vec<u8>;
                 }
                 #[doc(hidden)]
 
                 macro_rules! __export_component_signer_types_0_1_0_cabi{
-    ($ty:ident with_types_in $($path_to_types:tt)*) => (const _: () = {
+  ($ty:ident with_types_in $($path_to_types:tt)*) => (const _: () = {
 
-      #[export_name = "component:signer/types@0.1.0#[constructor]simple-signer"]
-      unsafe extern "C" fn export_constructor_simple_signer(arg0: i32,arg1: *mut u8,arg2: usize,) -> i32 {
-        $($path_to_types)*::_export_constructor_simple_signer_cabi::<<$ty as $($path_to_types)*::Guest>::SimpleSigner>(arg0, arg1, arg2)
-      }
-      #[export_name = "component:signer/types@0.1.0#[method]simple-signer.derive-account"]
-      unsafe extern "C" fn export_method_simple_signer_derive_account(arg0: *mut u8,) -> *mut u8 {
-        $($path_to_types)*::_export_method_simple_signer_derive_account_cabi::<<$ty as $($path_to_types)*::Guest>::SimpleSigner>(arg0)
-      }
-      #[export_name = "cabi_post_component:signer/types@0.1.0#[method]simple-signer.derive-account"]
-      unsafe extern "C" fn _post_return_method_simple_signer_derive_account(arg0: *mut u8,) {
-        $($path_to_types)*::__post_return_method_simple_signer_derive_account::<<$ty as $($path_to_types)*::Guest>::SimpleSigner>(arg0)
-      }
-      #[export_name = "component:signer/types@0.1.0#[method]simple-signer.sign-psbt"]
-      unsafe extern "C" fn export_method_simple_signer_sign_psbt(arg0: *mut u8,arg1: *mut u8,arg2: usize,) -> *mut u8 {
-        $($path_to_types)*::_export_method_simple_signer_sign_psbt_cabi::<<$ty as $($path_to_types)*::Guest>::SimpleSigner>(arg0, arg1, arg2)
-      }
-      #[export_name = "cabi_post_component:signer/types@0.1.0#[method]simple-signer.sign-psbt"]
-      unsafe extern "C" fn _post_return_method_simple_signer_sign_psbt(arg0: *mut u8,) {
-        $($path_to_types)*::__post_return_method_simple_signer_sign_psbt::<<$ty as $($path_to_types)*::Guest>::SimpleSigner>(arg0)
-      }
+    #[export_name = "component:signer/types@0.1.0#[constructor]simple-signer"]
+    unsafe extern "C" fn export_constructor_simple_signer(arg0: i32,arg1: *mut u8,arg2: usize,) -> i32 {
+      $($path_to_types)*::_export_constructor_simple_signer_cabi::<<$ty as $($path_to_types)*::Guest>::SimpleSigner>(arg0, arg1, arg2)
+    }
+    #[export_name = "component:signer/types@0.1.0#[method]simple-signer.derive-account"]
+    unsafe extern "C" fn export_method_simple_signer_derive_account(arg0: *mut u8,) -> *mut u8 {
+      $($path_to_types)*::_export_method_simple_signer_derive_account_cabi::<<$ty as $($path_to_types)*::Guest>::SimpleSigner>(arg0)
+    }
+    #[export_name = "cabi_post_component:signer/types@0.1.0#[method]simple-signer.derive-account"]
+    unsafe extern "C" fn _post_return_method_simple_signer_derive_account(arg0: *mut u8,) {
+      $($path_to_types)*::__post_return_method_simple_signer_derive_account::<<$ty as $($path_to_types)*::Guest>::SimpleSigner>(arg0)
+    }
+    #[export_name = "component:signer/types@0.1.0#[method]simple-signer.sign-psbt"]
+    unsafe extern "C" fn export_method_simple_signer_sign_psbt(arg0: *mut u8,arg1: *mut u8,arg2: usize,) -> *mut u8 {
+      $($path_to_types)*::_export_method_simple_signer_sign_psbt_cabi::<<$ty as $($path_to_types)*::Guest>::SimpleSigner>(arg0, arg1, arg2)
+    }
+    #[export_name = "cabi_post_component:signer/types@0.1.0#[method]simple-signer.sign-psbt"]
+    unsafe extern "C" fn _post_return_method_simple_signer_sign_psbt(arg0: *mut u8,) {
+      $($path_to_types)*::__post_return_method_simple_signer_sign_psbt::<<$ty as $($path_to_types)*::Guest>::SimpleSigner>(arg0)
+    }
+    #[export_name = "component:signer/types@0.1.0#[method]simple-signer.get-state"]
+    unsafe extern "C" fn export_method_simple_signer_get_state(arg0: *mut u8,) -> *mut u8 {
+      $($path_to_types)*::_export_method_simple_signer_get_state_cabi::<<$ty as $($path_to_types)*::Guest>::SimpleSigner>(arg0)
+    }
+    #[export_name = "cabi_post_component:signer/types@0.1.0#[method]simple-signer.get-state"]
+    unsafe extern "C" fn _post_return_method_simple_signer_get_state(arg0: *mut u8,) {
+      $($path_to_types)*::__post_return_method_simple_signer_get_state::<<$ty as $($path_to_types)*::Guest>::SimpleSigner>(arg0)
+    }
 
-      const _: () = {
-        #[doc(hidden)]
-        #[export_name = "component:signer/types@0.1.0#[dtor]simple-signer"]
-        #[allow(non_snake_case)]
-        unsafe extern "C" fn dtor(rep: *mut u8) {
-          $($path_to_types)*::SimpleSigner::dtor::<
-          <$ty as $($path_to_types)*::Guest>::SimpleSigner
-          >(rep)
-        }
-      };
+    const _: () = {
+      #[doc(hidden)]
+      #[export_name = "component:signer/types@0.1.0#[dtor]simple-signer"]
+      #[allow(non_snake_case)]
+      unsafe extern "C" fn dtor(rep: *mut u8) {
+        $($path_to_types)*::SimpleSigner::dtor::<
+        <$ty as $($path_to_types)*::Guest>::SimpleSigner
+        >(rep)
+      }
+    };
 
-    };);
-  }
+  };);
+}
                 #[doc(hidden)]
                 pub(crate) use __export_component_signer_types_0_1_0_cabi;
                 #[repr(align(4))]
@@ -623,9 +661,9 @@ pub(crate) use __export_singer_impl as export;
 #[cfg(target_arch = "wasm32")]
 #[link_section = "component-type:wit-bindgen:0.25.0:singer:encoded world"]
 #[doc(hidden)]
-pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 581] = *b"\
-\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xc8\x03\x01A\x02\x01\
-A\x02\x01B\x19\x01r\x01\x04xpivs\x04\0\x06config\x03\0\0\x01p}\x01q\x02\x09old-s\
+pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 628] = *b"\
+\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xf7\x03\x01A\x02\x01\
+A\x02\x01B\x1b\x01r\x01\x04xpivs\x04\0\x06config\x03\0\0\x01p}\x01q\x02\x09old-s\
 tate\x01\x02\0\x06config\x01\x01\0\x04\0\x0einitialization\x03\0\x03\x01q\x02\x10\
 derivation-error\0\0\x0dsigning-error\0\0\x04\0\x05error\x03\0\x05\x01s\x04\0\x0c\
 account-xpub\x03\0\x07\x01s\x04\0\x12master-fingerprint\x03\0\x09\x01s\x04\0\x12\
@@ -633,10 +671,11 @@ account-derivation\x03\0\x0b\x04\0\x0dsimple-signer\x03\x01\x01i\x0d\x01@\x01\x0
 init\x04\0\x0e\x04\0\x1a[constructor]simple-signer\x01\x0f\x01h\x0d\x01o\x03\x08\
 \x0a\x0c\x01j\x01\x11\x01\x06\x01@\x01\x04self\x10\0\x12\x04\0$[method]simple-si\
 gner.derive-account\x01\x13\x01j\x01\x02\x01\x06\x01@\x02\x04self\x10\x04psbt\x02\
-\0\x14\x04\0\x1f[method]simple-signer.sign-psbt\x01\x15\x04\x01\x1ccomponent:sig\
-ner/types@0.1.0\x05\0\x04\x01\x1dcomponent:signer/singer@0.1.0\x04\0\x0b\x0c\x01\
-\0\x06singer\x03\0\0\0G\x09producers\x01\x0cprocessed-by\x02\x0dwit-component\x07\
-0.208.1\x10wit-bindgen-rust\x060.25.0";
+\0\x14\x04\0\x1f[method]simple-signer.sign-psbt\x01\x15\x01@\x01\x04self\x10\0\x02\
+\x04\0\x1f[method]simple-signer.get-state\x01\x16\x04\x01\x1ccomponent:signer/ty\
+pes@0.1.0\x05\0\x04\x01\x1dcomponent:signer/singer@0.1.0\x04\0\x0b\x0c\x01\0\x06\
+singer\x03\0\0\0G\x09producers\x01\x0cprocessed-by\x02\x0dwit-component\x070.208\
+.1\x10wit-bindgen-rust\x060.25.0";
 
 #[inline(never)]
 #[doc(hidden)]

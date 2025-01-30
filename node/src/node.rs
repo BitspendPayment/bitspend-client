@@ -13,7 +13,7 @@ use crate::messages::tx::Tx;
 use serde::Serialize;
 
 use crate::chain::CompactChain;
-use crate::db::{KeyValueDb, CHAIN_STATE_KEY, SIGNER_STATE_KEY, WALLET_STATE_KEY};
+use crate::db::{KeyValueDb, CHAIN_STATE_KEY, NODE_STATE_KEY, SIGNER_STATE_KEY, WALLET_STATE_KEY};
 use crate::util::{Error, Serializable};
 use crate::util::Hash256;
 
@@ -47,7 +47,7 @@ pub struct Node {
 
 }
 
-#[derive(serde::Deserialize, Serialize)]
+#[derive(serde::Deserialize, Serialize, Clone)]
 pub struct NodeState {
     socket_address: CustomIPV4SocketAddress,
     network: bitcoin_network::Network
@@ -96,14 +96,14 @@ impl Node {
         let store  = Kvstore::new();
         let db = Arc::new(KeyValueDb::new(store.into()));
 
-        let serialized_node_state = db.get(WALLET_STATE_KEY.to_string()).expect("cannot retrieve node state");
-        let node_state: NodeState = bincode::deserialize(&serialized_node_state).unwrap();
-
         let wallet_state = db.get(WALLET_STATE_KEY.to_string()).expect("cannot retrieve old wallet state");
         let wallet = Arc::new(WatchOnly::new(&Initialization::OldState(wallet_state)));
 
         let signer_state = db.get(SIGNER_STATE_KEY.to_string()).expect("cannot retrieve old signer state");
         let signer = Arc::new(SimpleSigner::new(&SignerInitialization::OldState(signer_state)));
+
+        let serialized_node_state = db.get(NODE_STATE_KEY.to_string()).expect("cannot retrieve node state");
+        let node_state: NodeState = bincode::deserialize(&serialized_node_state).unwrap();
 
         let chain_state = db.get(CHAIN_STATE_KEY.to_string()).expect("cannot retrieve old chain state");
         let chain = CompactChain::restore(node_state.socket_address.clone(), node_state.network, wallet.clone(), chain_state);
@@ -114,12 +114,19 @@ impl Node {
 
     pub fn balance(&mut self) -> Result<u64, Error> {
         self.chain.sync_state()?;
+
+        self.store_state();
         
         return self.wallet.balance().map_err(|_| Error::WalletError(3));
+
     }
 
-    pub fn get_receive_address(&self) -> Result<String, Error> {
-        return self.wallet.get_receive_address().map_err(|_| Error::WalletError(4));
+    pub fn get_receive_address(&mut self) -> Result<String, Error> {
+        let address =  self.wallet.get_receive_address().map_err(|_| Error::WalletError(4))?;
+
+        self.store_state();
+
+        Ok(address)
     }
 
     pub fn send_to_address(& mut self, recepient: &[u8], amount: u64, fee_rate: u64) -> Result<(), Error> {
@@ -133,7 +140,27 @@ impl Node {
 
         self.chain.send_transaction(deserialised_transaction).unwrap();
 
+        self.store_state();
+
         return Ok(());
+
+    }
+
+    fn store_state(& mut self) {
+        let chain_state = self.chain.get_state();
+        let encoded_chain_state = bincode::serialize(&chain_state).unwrap();
+        self.db.insert(CHAIN_STATE_KEY.to_string(), encoded_chain_state).unwrap();
+
+        let wallet_state = self.wallet.get_state();
+        self.db.insert(WALLET_STATE_KEY.to_string(), wallet_state).unwrap();
+
+        let signer_state = self.signer.get_state();
+        self.db.insert(SIGNER_STATE_KEY.to_string(), signer_state).unwrap();
+
+        let node_state = self.node_state.clone();
+        let encoded_node_state = bincode::serialize(&node_state).unwrap();
+        self.db.insert(NODE_STATE_KEY.to_string(), encoded_node_state).unwrap();
+        
 
     }
 

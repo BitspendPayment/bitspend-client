@@ -3,6 +3,7 @@ RPCUSER = regtest
 RPCPASSWORD = regtest
 RPCPORT = 18443
 DOCKER_COMPOSE_FILE = ./docker-compose.yml
+TEST_DATA_FOLDER = ./testdata/bitcoin-wasm
 BITCOIND_CONTAINER = bitcoind
 
 # Default target
@@ -59,3 +60,4 @@ run_test:
 clean:
 	@echo "Stopping containers and cleaning up..."
 	@docker compose -f $(DOCKER_COMPOSE_FILE) down
+	rm -rf $(TEST_DATA_FOLDER) || true

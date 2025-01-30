@@ -151,6 +151,10 @@ impl GuestWatchOnly for WatchOnyWallet {
         let psbt = Psbt::deserialize(&psbt).unwrap();
         return self.inner.borrow_mut().finalise_psbt_tx(psbt).map_err(|err| err.into())
     }
+    
+    fn get_state(&self) -> Vec<u8> {
+        return self.inner.borrow_mut().get_state();
+    }
 
 }
 

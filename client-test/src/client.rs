@@ -44,6 +44,31 @@ impl BitspendClient {
         return Self { store, component: resource, world: instance };
     }
 
+    pub fn restore() -> Self {
+        let mut config = Config::default();
+        config.wasm_component_model(true);
+        config.async_support(false);
+        let engine = Engine::new(&config).unwrap();
+        let mut linker = Linker::new(&engine);
+        let pathtowasm  = PathBuf::from(env::var_os("OUT_DIR").unwrap())
+                .join(format!("wasm32-wasi/debug/node-composed.wasm"));
+    
+        // Add the command world (aka WASI CLI) to the linker
+        wasmtime_wasi::add_to_linker_sync(&mut linker).unwrap();
+        wasmtime_wasi_http::add_only_http_to_linker_sync(&mut linker).unwrap();
+        
+        let wasi_view = ClientWasiView::new();
+        let mut store = Store::new(&engine, wasi_view);
+        
+        let component = Component::from_file(&engine, pathtowasm).unwrap();
+        let instance =  Nodeworld::instantiate(&mut store, &component, &linker)
+            .unwrap();
+        let init = Initialization::OldState;
+        let resource = instance.component_node_types().client_node().call_constructor(&mut store, &init).unwrap();
+
+        return Self { store, component: resource, world: instance };
+    }
+
     pub fn balance(& mut self) -> u64 {
         let balance = self.world.component_node_types().client_node().call_get_balance(&mut self.store, self.component.clone()).unwrap().unwrap();
         return balance
@@ -86,7 +111,7 @@ impl ClientWasiView {
         let http_ctx = WasiHttpCtx::new();
         let ctx = WasiCtxBuilder::new()
             .inherit_stdio()
-            .preopened_dir("/tmp", ".", DirPerms::all(), FilePerms::all()).unwrap()
+            .preopened_dir("./testdata/", ".", DirPerms::all(), FilePerms::all()).unwrap()
             .inherit_network()
             .allow_ip_name_lookup(true)
             .allow_tcp(true)

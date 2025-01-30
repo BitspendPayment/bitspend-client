@@ -57,6 +57,10 @@ impl WatchOnly {
         Ok(partial_utxos)
     }
 
+    pub fn get_state(& self) -> Vec<u8> {
+        return bincode::serialize(self).unwrap();
+    }
+
     pub fn get_pubkeys(& self) -> Result< Vec<Vec<u8>>, errors::Error> {
         let pubkeys: Vec<Vec<u8>> = self.pubkey_map.keys().cloned().collect();
         Ok(pubkeys)
@@ -88,7 +92,6 @@ impl WatchOnly {
         let mut utxos: Vec<_> = self.utxo_map.values().cloned().collect();
         
         utxos.sort_by(|a,b | a.utxo.is_spent.cmp(&b.utxo.is_spent));
-        println!("utxo length {}", utxos.len());
 
         let mut balance = Amount::ZERO;
         for utxo in utxos {

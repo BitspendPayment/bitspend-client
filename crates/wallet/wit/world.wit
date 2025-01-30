@@ -54,6 +54,8 @@ interface types {
 
         get-pubkeys: func() -> result<list<pubkey>, error>;
 
+        get-state: func() -> list<u8>;
+
         balance: func() -> result<u64, error>;
 
         get-receive-address: func() -> result<string, error>;

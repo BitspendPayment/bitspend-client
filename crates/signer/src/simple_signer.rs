@@ -47,4 +47,8 @@ impl SimpleSigner {
             Err(Error::SigningError)
         }
     }
+
+    pub fn get_state(& self) -> Vec<u8> {
+        return bincode::serialize(self).unwrap();
+    }
 }
