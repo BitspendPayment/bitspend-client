@@ -86,16 +86,21 @@ impl WatchOnly {
 
     pub fn balance(&mut self) -> Result<Amount, errors::Error> {
         let mut utxos: Vec<_> = self.utxo_map.values().cloned().collect();
+        
         utxos.sort_by(|a,b | a.utxo.is_spent.cmp(&b.utxo.is_spent));
-        let value = utxos.clone().into_iter().fold(Amount::ZERO, |acc,  utxo|  {
-            let inner = utxo.utxo;
-            if inner.is_spent {
-                return acc.checked_sub(inner.txout.value).unwrap(); 
-            }
-            acc.checked_add(inner.txout.value).unwrap()
-        });
+        println!("utxo length {}", utxos.len());
 
-        return  Ok(value);
+        let mut balance = Amount::ZERO;
+        for utxo in utxos {
+            let inner = utxo.utxo;
+            
+            if !inner.is_spent {
+                balance = balance.checked_add(inner.txout.value).unwrap();
+            }
+        }
+    
+        Ok(balance)
+
     }
 
     pub fn get_receive_address(& mut self) -> Result<String ,errors::Error>{

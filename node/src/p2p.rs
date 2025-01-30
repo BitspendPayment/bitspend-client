@@ -126,8 +126,6 @@ impl Peer {
 
             match self.receive(PONG) {
                 Ok(_) => {
-                    println!("initialted already");
-
                     Ok(())
                 },
                 Err(_) => {
@@ -186,7 +184,6 @@ impl Peer {
         self.send(Message::Inv(inv))?;
         match self.receive(commands::GETDATA)? {
             Message::GetData(inv) => {
-                println!("gotten get txn_Data back");
                 
                 let inv_obect = inv.objects.first().unwrap();
                 if inv_obect.hash == txn_hash {

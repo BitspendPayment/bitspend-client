@@ -35,11 +35,12 @@ pub fn test(bitspend_client: & mut BitspendClient) {
     let balance = bitspend_client.balance();
     assert_eq!(balance, total_amount);
     
-
+    println!("this is old balance {}", balance);
     let sending = bitspend_client.send_to_address(mine_to_address.script_pubkey().to_bytes(), transfer_amount, 3);
     bitcoin_rpc.generate_to_address(1, &mine_to_address).unwrap();
     let balance = bitspend_client.balance();
-    assert_eq!(balance, total_amount - 100_000);
+    let fee = 341;
+    assert_eq!(balance, total_amount - (100_000 + fee));
 
 
     

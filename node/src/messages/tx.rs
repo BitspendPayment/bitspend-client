@@ -178,7 +178,7 @@ impl Serializable<Tx> for Tx {
                         witnesses.push(TxWitness::read(reader)?);
                     }
                     let lock_time = reader.read_u32::<LittleEndian>()?;
-                    println!("These are witnesses {:?}", witnesses);
+                    
                     return Ok(Tx {
                         version,
                         inputs,

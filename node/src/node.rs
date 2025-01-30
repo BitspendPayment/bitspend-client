@@ -131,7 +131,6 @@ impl Node {
         let mut cursor_transaction = Cursor::new(finalised_transaction);
         let deserialised_transaction = Tx::read(&mut cursor_transaction).unwrap();
 
-        println!("this is transaction {:?}", deserialised_transaction.witnesses);
         self.chain.send_transaction(deserialised_transaction).unwrap();
 
         return Ok(());
