@@ -1552,7 +1552,6 @@ pub mod exports {
 
                 #[derive(Clone)]
                 pub struct NodeConfig {
-                    pub genesis_blockhash: _rt::String,
                     pub network: BitcoinNetwork,
                     pub socket_address: Ipv4SocketAdress,
                     pub xpriv: _rt::String,
@@ -1560,7 +1559,6 @@ pub mod exports {
                 impl ::core::fmt::Debug for NodeConfig {
                     fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
                         f.debug_struct("NodeConfig")
-                            .field("genesis-blockhash", &self.genesis_blockhash)
                             .field("network", &self.network)
                             .field("socket-address", &self.socket_address)
                             .field("xpriv", &self.xpriv)
@@ -1729,44 +1727,39 @@ pub mod exports {
                 #[allow(non_snake_case)]
                 pub unsafe fn _export_constructor_client_node_cabi<T: GuestClientNode>(
                     arg0: i32,
-                    arg1: *mut u8,
-                    arg2: usize,
+                    arg1: i32,
+                    arg2: i32,
                     arg3: i32,
                     arg4: i32,
                     arg5: i32,
                     arg6: i32,
-                    arg7: i32,
-                    arg8: i32,
-                    arg9: *mut u8,
-                    arg10: usize,
+                    arg7: *mut u8,
+                    arg8: usize,
                 ) -> i32 {
                     #[cfg(target_arch = "wasm32")]
                     _rt::run_ctors_once();
-                    let v2 = match arg0 {
+                    let v1 = match arg0 {
                         0 => Initialization::OldState,
                         n => {
                             debug_assert_eq!(n, 1, "invalid enum discriminant");
-                            let e2 = {
-                                let len0 = arg2;
-                                let bytes0 = _rt::Vec::from_raw_parts(arg1.cast(), len0, len0);
-                                let len1 = arg10;
-                                let bytes1 = _rt::Vec::from_raw_parts(arg9.cast(), len1, len1);
+                            let e1 = {
+                                let len0 = arg8;
+                                let bytes0 = _rt::Vec::from_raw_parts(arg7.cast(), len0, len0);
 
                                 NodeConfig {
-                                    genesis_blockhash: _rt::string_lift(bytes0),
-                                    network: BitcoinNetwork::_lift(arg3 as u8),
+                                    network: BitcoinNetwork::_lift(arg1 as u8),
                                     socket_address: Ipv4SocketAdress {
-                                        address: (arg4 as u8, arg5 as u8, arg6 as u8, arg7 as u8),
-                                        port: arg8 as u16,
+                                        address: (arg2 as u8, arg3 as u8, arg4 as u8, arg5 as u8),
+                                        port: arg6 as u16,
                                     },
-                                    xpriv: _rt::string_lift(bytes1),
+                                    xpriv: _rt::string_lift(bytes0),
                                 }
                             };
-                            Initialization::Config(e2)
+                            Initialization::Config(e1)
                         }
                     };
-                    let result3 = ClientNode::new(T::new(v2));
-                    (result3).take_handle() as i32
+                    let result2 = ClientNode::new(T::new(v1));
+                    (result2).take_handle() as i32
                 }
                 #[doc(hidden)]
                 #[allow(non_snake_case)]
@@ -1932,8 +1925,8 @@ pub mod exports {
   ($ty:ident with_types_in $($path_to_types:tt)*) => (const _: () = {
 
     #[export_name = "component:node/types@0.1.0#[constructor]client-node"]
-    unsafe extern "C" fn export_constructor_client_node(arg0: i32,arg1: *mut u8,arg2: usize,arg3: i32,arg4: i32,arg5: i32,arg6: i32,arg7: i32,arg8: i32,arg9: *mut u8,arg10: usize,) -> i32 {
-      $($path_to_types)*::_export_constructor_client_node_cabi::<<$ty as $($path_to_types)*::Guest>::ClientNode>(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10)
+    unsafe extern "C" fn export_constructor_client_node(arg0: i32,arg1: i32,arg2: i32,arg3: i32,arg4: i32,arg5: i32,arg6: i32,arg7: *mut u8,arg8: usize,) -> i32 {
+      $($path_to_types)*::_export_constructor_client_node_cabi::<<$ty as $($path_to_types)*::Guest>::ClientNode>(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)
     }
     #[export_name = "component:node/types@0.1.0#[method]client-node.get-balance"]
     unsafe extern "C" fn export_method_client_node_get_balance(arg0: *mut u8,) -> *mut u8 {
@@ -2243,8 +2236,8 @@ pub(crate) use __export_nodeworld_impl as export;
 #[cfg(target_arch = "wasm32")]
 #[link_section = "component-type:wit-bindgen:0.25.0:nodeworld:encoded world"]
 #[doc(hidden)]
-pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 2764] = *b"\
-\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xcc\x14\x01A\x02\x01\
+pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 2745] = *b"\
+\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xb9\x14\x01A\x02\x01\
 A\x08\x01B\x10\x01q\x06\x0fopen-file-error\0\0\x0cstream-error\0\0\x0efile-not-f\
 ound\x01w\0\x0cinvalid-data\0\0\x0bparse-error\0\0\x0fentry-not-found\0\0\x04\0\x05\
 error\x03\0\0\x04\0\x07kvstore\x03\x01\x01i\x02\x01@\0\0\x03\x04\0\x14[construct\
@@ -2290,17 +2283,17 @@ r\0\0\x04\0\x0bstore-error\x03\0\x02\x01o\x04}}}}\x01r\x02\x07address\x04\x04por
 t{\x04\0\x12ipv4-socket-adress\x03\0\x05\x01m\x05\x07bitcoin\x07testnet\x08testn\
 et4\x06signet\x07regtest\x04\0\x0fbitcoin-network\x03\0\x07\x01ks\x01r\x04\x03fe\
 e\x09\x19estimated-settlement-timew\x02ids\x04rates\x04\0\x10offering-bargain\x03\
-\0\x0a\x01r\x04\x11genesis-blockhashs\x07network\x08\x0esocket-address\x06\x05xp\
-rivs\x04\0\x0bnode-config\x03\0\x0c\x01q\x02\x09old-state\0\0\x06config\x01\x0d\0\
-\x04\0\x0einitialization\x03\0\x0e\x04\0\x0bclient-node\x03\x01\x01i\x10\x01@\x01\
-\x04init\x0f\0\x11\x04\0\x18[constructor]client-node\x01\x12\x01h\x10\x01j\x01w\x01\
-y\x01@\x01\x04self\x13\0\x14\x04\0\x1f[method]client-node.get-balance\x01\x15\x01\
-j\x01s\x01y\x01@\x01\x04self\x13\0\x16\x04\0'[method]client-node.get-receive-add\
-ress\x01\x17\x01p}\x01j\0\x01y\x01@\x04\x04self\x13\x09recepient\x18\x06amountw\x08\
-fee-ratew\0\x19\x04\0#[method]client-node.send-to-address\x01\x1a\x04\x01\x1acom\
-ponent:node/types@0.1.0\x05\x03\x04\x01\x1ecomponent:node/nodeworld@0.1.0\x04\0\x0b\
-\x0f\x01\0\x09nodeworld\x03\0\0\0G\x09producers\x01\x0cprocessed-by\x02\x0dwit-c\
-omponent\x070.208.1\x10wit-bindgen-rust\x060.25.0";
+\0\x0a\x01r\x03\x07network\x08\x0esocket-address\x06\x05xprivs\x04\0\x0bnode-con\
+fig\x03\0\x0c\x01q\x02\x09old-state\0\0\x06config\x01\x0d\0\x04\0\x0einitializat\
+ion\x03\0\x0e\x04\0\x0bclient-node\x03\x01\x01i\x10\x01@\x01\x04init\x0f\0\x11\x04\
+\0\x18[constructor]client-node\x01\x12\x01h\x10\x01j\x01w\x01y\x01@\x01\x04self\x13\
+\0\x14\x04\0\x1f[method]client-node.get-balance\x01\x15\x01j\x01s\x01y\x01@\x01\x04\
+self\x13\0\x16\x04\0'[method]client-node.get-receive-address\x01\x17\x01p}\x01j\0\
+\x01y\x01@\x04\x04self\x13\x09recepient\x18\x06amountw\x08fee-ratew\0\x19\x04\0#\
+[method]client-node.send-to-address\x01\x1a\x04\x01\x1acomponent:node/types@0.1.\
+0\x05\x03\x04\x01\x1ecomponent:node/nodeworld@0.1.0\x04\0\x0b\x0f\x01\0\x09nodew\
+orld\x03\0\0\0G\x09producers\x01\x0cprocessed-by\x02\x0dwit-component\x070.208.1\
+\x10wit-bindgen-rust\x060.25.0";
 
 #[inline(never)]
 #[doc(hidden)]

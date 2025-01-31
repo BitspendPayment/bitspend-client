@@ -15,4 +15,7 @@
         "--all-targets",
         "--message-format=json"
     ],
+    "cSpell.words": [
+        "BITSPEND"
+    ],
 }

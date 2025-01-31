@@ -13,6 +13,7 @@ mod latch;
 mod result;
 mod serdes;
 pub mod block_filter;
+pub mod network_const;
 pub(crate) mod var_int;
 
 

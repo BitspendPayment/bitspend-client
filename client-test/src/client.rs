@@ -88,14 +88,13 @@ impl BitspendClient {
 
 pub fn generate_node_regtest_config() -> NodeConfig {
     let secp = Secp256k1::new();
-    let genesis_blockhash = "0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206".to_string();
     let network = BitcoinNetwork::Regtest;
     let socket_address = Ipv4SocketAdress { address: (127,0,0,1) ,  port: 18744 };
     let mut rng = rand::thread_rng();
     let entropy: [u8; 16] = rng.gen();
     let  xpriv = ExtendedPrivKey::new_master(bitcoin::Network::Regtest, &entropy).unwrap();
 
-    return NodeConfig { genesis_blockhash, network, xpriv : xpriv.to_string(), socket_address}
+    return NodeConfig { network, xpriv : xpriv.to_string(), socket_address}
 
 }
 

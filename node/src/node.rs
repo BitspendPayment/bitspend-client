@@ -1,23 +1,18 @@
 use std::io::Cursor;
 use std::sync::Arc;
-use bincode::de;
-use bitcoin::bip32::Xpriv;
-use bitcoin::{network as bitcoin_network, Address, Amount, FeeRate};
+use bitcoin::network as bitcoin_network;
 
 use crate::bindings::component::kv::types::Kvstore ;
 use crate::bindings::component::wallet::types::{WatchOnly, Initialization, Config as WalletConfig, BitcoinNetwork as WalletBitcoinNetwork };
 use crate::bindings::component::signer::types::{SimpleSigner, Initialization as SignerInitialization, Config as SignerConfig };
-use crate::bindings::exports::component::node::types::BitcoinNetwork;
 use crate::messages::tx::Tx;
+use crate::util::network_const::genesis_block_hash_from_network;
 
 use serde::Serialize;
 
 use crate::chain::CompactChain;
 use crate::db::{KeyValueDb, CHAIN_STATE_KEY, NODE_STATE_KEY, SIGNER_STATE_KEY, WALLET_STATE_KEY};
 use crate::util::{Error, Serializable};
-use crate::util::Hash256;
-
-
 
 
 
@@ -32,7 +27,6 @@ pub struct CustomIPV4SocketAddress {
 pub struct NodeConfig {
     pub socket_address: CustomIPV4SocketAddress,
     pub network: bitcoin_network::Network,
-    pub genesis_blockhash: Hash256,
     pub xpriv: String,
 }
 
@@ -84,9 +78,10 @@ impl Node {
             master_fingerprint,
             network: node_config.network.into(), 
         };
+
         let wallet = Arc::new(WatchOnly::new(&Initialization::Config(wallet_config)));
          
-        let chain = CompactChain::new(node_config.socket_address.clone(), node_config.network, node_config.genesis_blockhash, wallet.clone());
+        let chain = CompactChain::new(node_config.socket_address.clone(), node_config.network, genesis_block_hash_from_network(node_config.network), wallet.clone());
 
         Self { chain, wallet, node_state: NodeState{ socket_address: node_config.socket_address, network: node_config.network }, db: db.clone(), signer }
 
@@ -161,7 +156,6 @@ impl Node {
         let encoded_node_state = bincode::serialize(&node_state).unwrap();
         self.db.insert(NODE_STATE_KEY.to_string(), encoded_node_state).unwrap();
         
-
     }
 
 

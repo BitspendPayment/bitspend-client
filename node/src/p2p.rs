@@ -1,10 +1,10 @@
-use std::{io::{Read, Write}, net::{Ipv4Addr}, str::FromStr, sync::atomic::AtomicUsize};
+use std::{net::Ipv4Addr, sync::atomic::AtomicUsize};
 
 use wasi::{clocks::{monotonic_clock, wall_clock}, random::random, sockets::{instance_network, network::{self, Ipv4SocketAddress}, tcp::{InputStream, IpSocketAddress, OutputStream}, tcp_create_socket::create_tcp_socket}};
 use bitcoin::{
     network as bitcoin_network, Network
 };
-use crate::{messages::{self, block::Block, block_locator::{BlockLocator, NO_HASH_STOP }, commands::{self, PONG}, compact_filter::CompactFilter, compact_filter_header::CompactFilterHeader, filter_locator::FilterLocator, tx::Tx, BlockHeader, Inv, InvVect, Message, NodeAddr, Version, PROTOCOL_VERSION}, util::Hash256};
+use crate::{messages::{self, block::Block, block_locator::{BlockLocator, NO_HASH_STOP }, commands::{self, PONG}, compact_filter::CompactFilter, compact_filter_header::CompactFilterHeader, filter_locator::FilterLocator, tx::Tx, BlockHeader, Inv, InvVect, Message, NodeAddr, Version, PROTOCOL_VERSION}, util::{network_const::magic_from_network, Hash256}};
 use crate::node::CustomIPV4SocketAddress;
 use crate::tcpsocket::WasiTcpSocket;
 use core::sync::atomic::Ordering;
@@ -12,13 +12,14 @@ use crate::messages::Message::Ping;
 use crate::util::{Error, Result};
 
 const MAX_PROTOCOL_VERSION: u32 = 70015;
-const USER_AGENT: &str = concat!("/BITCOINWASM:", env!("CARGO_PKG_VERSION"), '/');
+const USER_AGENT: &str = concat!("/BITSPEND_CLIENT:", env!("CARGO_PKG_VERSION"), '/');
 
 pub struct Peer {
     input_stream: InputStream,
     output_stream: OutputStream,
     remote_address: NodeAddr,
     bitcoin_config: BitcoinP2PConfig,
+    magic: [u8; 4],
 }
 
 impl Peer {
@@ -31,7 +32,7 @@ impl Peer {
          user_agent: USER_AGENT.to_owned(),
          height: AtomicUsize::new(0),
       };
-      let mut peer =  Self { input_stream, output_stream, remote_address, bitcoin_config};
+      let mut peer =  Self { input_stream, output_stream, remote_address, bitcoin_config, magic: magic_from_network(network)};
       peer.handshake().unwrap();
       peer
     }
@@ -116,7 +117,7 @@ impl Peer {
             return Ok(cfheades);
         }
         Err(Error::WrongP2PMessage)
-  }
+    }
 
       pub fn keep_alive(& mut self) -> Result<()> {
             let nonce = random::get_random_u64();
@@ -150,32 +151,6 @@ impl Peer {
         }
     }
 
-    pub fn fetch_transactions(& mut self, inv: Inv) -> Result<Vec<Tx>> {
-        let mut transactions = Vec::new();
-        let data_len = inv.objects.len();
-        self.send(Message::GetData(inv))?;
-        println!("data here");
-        loop {
-            match self.receive(commands::TX)? {
-                Message::Tx(transaction) => {
-                    println!("gotten txn_Data");
-                    transactions.push(transaction.clone());
-                    if transactions.len() == data_len {
-                        return Ok(transactions);
-                    } 
-                    continue;
-                },  
-                Message::NotFound(inv) => {
-                    println!("data not found {:?}", inv);
-                    return Err(Error::WrongP2PMessage);
-                },
-                _ => {
-                    return Err(Error::WrongP2PMessage);
-                }
-            }
-        }
-    }
-
     pub fn send_transaction(&mut self, transaction: Tx) -> Result<()> {
         let txn_hash = transaction.clone().hash();
         let inv = Inv { objects: vec![ InvVect { obj_type: 1, hash: txn_hash }] };
@@ -188,17 +163,11 @@ impl Peer {
                 if inv_obect.hash == txn_hash {
                     let transaction_massage = Message::Tx(transaction);
                     self.send(transaction_massage)?;
-                    return Ok(());
-                } 
-
-                Err(Error::WrongP2PMessage)
-
-               
+                    Ok(())
+                } else {
+                    Err(Error::WrongP2PMessage)
+                }      
             },  
-            Message::NotFound(inv) => {
-                println!("data not found {:?}", inv);
-                return Err(Error::WrongP2PMessage);
-            },
             _ => {
                 return Err(Error::WrongP2PMessage);
             }
@@ -206,14 +175,14 @@ impl Peer {
     }
     
     fn send(&mut self, message: Message) -> Result<()> {
-        message.write(&mut self.output_stream, [0xfa, 0xbf, 0xb5, 0xda]).map_err(Error::IOError)?;
+        message.write(&mut self.output_stream, self.magic).map_err(Error::IOError)?;
         self.output_stream.blocking_flush().map_err(Error::StreamingError)?;
         Ok(())
     }
 
-       
-
+    
     fn receive(& mut self, message_type: [u8; 12]) -> Result<Message>{
+        // Recognition of Latency of Bitcoin P2P Network
          let duration = monotonic_clock::now() + 1_000_000_000;
          while monotonic_clock::now() < duration {
              let decoded_message = Message::read(&mut self.input_stream);
@@ -314,13 +283,6 @@ impl P2PControl for P2P {
                 .as_mut()
                 .ok_or(Error::PeerNotFound)?
                 .fetch_blocks(inv)
-        }
-
-        pub fn get_transaction(&mut self, inv: Inv) -> Result<Vec<Tx>> {
-            self.peer
-                .as_mut()
-                .ok_or(Error::PeerNotFound)?
-                .fetch_transactions(inv)
         }
 
         pub fn send_transaction(&mut self, transaction: Tx) -> Result<()> {
