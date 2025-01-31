@@ -48,7 +48,7 @@ impl CompactChain {
         let mut p2p = P2P::new();
         p2p.connect_peer(socket, network).expect("Failed to connect to peer");
 
-        let chain_state: ChainState = bincode::deserialize(&state).unwrap();
+        let chain_state: ChainState = bincode::deserialize(&state).expect("Failed to deserialise Chain State");
         Self{ p2p, chain_state: chain_state, wallet }
     }
 
@@ -58,7 +58,7 @@ impl CompactChain {
 
 
     fn get_and_verify_compact_filters(& mut self, start_height: u32, last_block_hash: Hash256) -> Result<Vec<CompactFilter>, Error> {
-        let filter_header = self.p2p.get_compact_filter_headers(start_height, last_block_hash).unwrap();
+        let filter_header = self.p2p.get_compact_filter_headers(start_height, last_block_hash).map_err(|err| Error::FetchCompactFilterHeader(err.to_error_code()))?;
         let filters = self.p2p.get_compact_filters(start_height, last_block_hash).map_err(|err| Error::FetchCompactFilter(err.to_error_code()))?;
 
         
@@ -77,7 +77,7 @@ impl CompactChain {
         let blockhash_present: Vec<_> = filters.into_iter().filter_map(|filter| {
             let filter_algo = util::block_filter::BlockFilter::new(&filter.filter_bytes);
             
-            let result = filter_algo.match_any(&filter.block_hash, pub_keys.clone().into_iter()).unwrap();
+            let result = filter_algo.match_any(&filter.block_hash, pub_keys.clone().into_iter()).expect("error matching Filters");
             match result {
                 true => Some(filter.block_hash),
                 false => None,
@@ -122,7 +122,7 @@ impl CompactChain {
              }
         }
 
-        self.wallet.insert_utxos(&new_utxos).unwrap();
+        self.wallet.insert_utxos(&new_utxos).map_err(|_| Error::WalletError(1))?;
         Ok(())
 
     }

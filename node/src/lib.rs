@@ -40,19 +40,15 @@ impl From<WasiBitcoinNetwork> for bitcoin_network::Network {
 
 impl From<WasiNodeConfig> for NodeConfig {
     fn from(val: WasiNodeConfig) -> Self {
-        let WasiNodeConfig { network, socket_address, genesis_blockhash, xpriv    } = val;
+        let WasiNodeConfig { network, socket_address, xpriv    } = val;
 
         // Convert the network type
         let network: bitcoin_network::Network = network.into();
-
-        // Decode the  genesis blockhash with error handling
-        let genesis_blockhash = Hash256::decode(&genesis_blockhash).expect("Failed to decode genesis blockhash");
 
         // Construct and return the NodeConfig
         NodeConfig {
             network,
             socket_address: CustomIPV4SocketAddress{ ip: socket_address.address, port: socket_address.port  },
-            genesis_blockhash,
             xpriv
         }
     }

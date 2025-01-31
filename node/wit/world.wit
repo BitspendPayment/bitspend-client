@@ -56,7 +56,6 @@ interface types {
     }
 
     record node-config {
-        genesis-blockhash: string,
         network: bitcoin-network,
         socket-address: ipv4-socket-adress,
         xpriv: string
